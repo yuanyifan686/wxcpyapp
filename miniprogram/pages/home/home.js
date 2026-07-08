@@ -1,4 +1,6 @@
 const fortuneService = require('../../services/fortune.js')
+const ritualUtil = require('../../utils/loading-ritual.js')
+const storage = require('../../utils/storage.js')
 
 Page({
   data: {
@@ -7,14 +9,37 @@ Page({
     exploding: false,
     loading: false,
     hasOfficialToday: false,
+    ritualVisible: false,
+    ritualTitle: '',
+    ritualMsg: '',
+    ritualProgress: 0,
+    ritualPct: 0,
+    ritualFlavor: '',
+    ritualStage: '',
+    ritualElapsed: '0s',
+    ritualStep: 0,
+    ritualSuccess: false,
+    ritualStepList: ritualUtil.STAGES.map((_, i) => i),
   },
 
   onShow() {
+    if (!storage.isOnboarded()) {
+      wx.redirectTo({ url: '/pages/welcome/welcome' })
+      return
+    }
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
     this.initStars()
     this.checkToday()
+  },
+
+  onHide() {
+    ritualUtil.cancelRitual(this)
+  },
+
+  onUnload() {
+    ritualUtil.cancelRitual(this)
   },
 
   initStars() {
@@ -62,6 +87,7 @@ Page({
   startGenerate(isEntertainment) {
     this.setData({ animating: true, loading: true })
     wx.vibrateShort({ type: 'medium' })
+    ritualUtil.startRitual(this)
 
     setTimeout(() => {
       this.setData({ exploding: true })
@@ -69,14 +95,14 @@ Page({
     }, 1200)
 
     fortuneService.generateAndSave(isEntertainment)
+      .then(() => ritualUtil.completeRitual(this))
       .then(() => {
-        setTimeout(() => {
-          this.setData({ animating: false, exploding: false, loading: false })
-          if (!isEntertainment) this.setData({ hasOfficialToday: true })
-          this.goResult()
-        }, 2000)
+        this.setData({ animating: false, exploding: false, loading: false })
+        if (!isEntertainment) this.setData({ hasOfficialToday: true })
+        this.goResult()
       })
       .catch((err) => {
+        ritualUtil.cancelRitual(this)
         this.setData({ animating: false, exploding: false, loading: false })
         wx.showToast({ title: err.message || '生成失败', icon: 'none' })
       })

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "欢迎",
+  "usingComponents": {
+    "glass-button": "/components/glass-button/glass-button"
+  }
+}

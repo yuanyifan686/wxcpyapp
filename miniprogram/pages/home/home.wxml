@@ -5,7 +5,7 @@
   </view>
 
   <view class="header fade-in">
-    <text class="logo">⚡ CYBER</text>
+    <text class="logo">⚡ CYBER FORTUNE</text>
     <text class="title gradient-text">今日赛博运势</text>
     <text class="slogan">宇宙服务器今日已同步你的幸运值</text>
   </view>
@@ -24,7 +24,33 @@
     <glass-button wx:if="{{hasOfficialToday}}" text="娱乐重抽" type="ghost" bind:tap="onRegenerate" />
   </view>
 
-  <view wx:if="{{loading}}" class="loading-mask">
-    <text class="loading-text">宇宙 WiFi 连接中...</text>
+  <view wx:if="{{ritualVisible}}" class="ritual-overlay">
+    <view class="ritual-panel glass-card {{ritualSuccess ? 'ritual-success' : ''}}">
+      <view class="ritual-visual">
+        <view class="ritual-orbit o1"></view>
+        <view class="ritual-orbit o2"></view>
+        <text class="ritual-core">🔮</text>
+      </view>
+      <view class="ritual-stage-line">
+        <text class="ritual-stage-badge">{{ritualStage}}</text>
+        <text class="ritual-elapsed">{{ritualElapsed}}</text>
+      </view>
+      <text class="ritual-title">{{ritualTitle}}</text>
+      <text class="ritual-msg">{{ritualMsg}}</text>
+      <view class="ritual-progress-wrap">
+        <view class="ritual-progress-track">
+          <view class="ritual-progress-fill" style="width:{{ritualProgress}}%"></view>
+        </view>
+        <text class="ritual-pct">{{ritualPct}}%</text>
+      </view>
+      <text class="ritual-flavor">💬 {{ritualFlavor}}</text>
+      <view class="ritual-steps">
+        <view
+          wx:for="{{ritualStepList}}"
+          wx:key="*this"
+          class="ritual-step {{ritualStep > item ? 'done' : ''}} {{ritualStep === item ? 'active' : ''}}"
+        ></view>
+      </view>
+    </view>
   </view>
 </view>

@@ -1,5 +1,6 @@
 import * as fortune from './fortune.js'
 import * as state from './state.js'
+import * as storage from './storage.js'
 import { formatDisplay, today, daysAgo, shiftDate, RANKING_HISTORY_DAYS } from './date.js'
 import { animateNumber, scoreToStars, levelColor } from './animation.js'
 import {
@@ -11,12 +12,14 @@ import {
   renderStatChips, renderNeonCard, rankMedal, levelBadgeClass,
   initTabIcons, spawnParticles,
 } from './chrome.js'
+import { FortuneLoadingRitual } from './loading-ritual.js'
 
 const appEl = document.getElementById('app')
 const tabBar = document.getElementById('tab-bar')
 const TABS = ['home', 'history', 'ranking', 'profile']
 
 let homeState = { loading: false, animating: false, exploding: false, hasOfficialToday: false }
+let activeRitual = null
 let rankingRefreshBound = false
 let rankingSelectedDate = today()
 
@@ -38,7 +41,80 @@ function setTabActive(route) {
   appEl.classList.toggle('full-height', !isTab)
 }
 
+function setShellVisible(showMain) {
+  tabBar.style.display = showMain ? 'flex' : 'none'
+  const statusBar = document.querySelector('.status-bar')
+  if (statusBar) statusBar.style.display = showMain ? 'flex' : 'none'
+}
+
+function renderOnboarding() {
+  setShellVisible(false)
+  appEl.classList.add('full-height')
+  const avatar = AVATAR_PRESETS[Math.floor(Math.random() * AVATAR_PRESETS.length)]
+
+  appEl.innerHTML = wrapPage(`
+    <div class="onboard-page">
+      ${renderPageHeader({ chip: 'WELCOME', title: '欢迎来到赛博宇宙', subtitle: '取个名字，开启今日运势之旅' })}
+      <div class="onboard-card neon-card glass-card fade-in">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <div class="onboard-avatar-wrap">
+          <img class="onboard-avatar" id="onboard-avatar" src="${escapeHtml(avatar)}" alt="" />
+          <button type="button" class="onboard-avatar-btn" id="onboard-avatar-btn">换头像</button>
+        </div>
+        <label class="onboard-label" for="onboard-name">你的赛博用户名</label>
+        <input
+          class="onboard-input"
+          id="onboard-name"
+          type="text"
+          maxlength="16"
+          placeholder="2-16 个字符，例如：欧皇小明"
+          autocomplete="nickname"
+        />
+        <p class="onboard-hint" id="onboard-hint">将用于排行榜展示与运势签文</p>
+        <button type="button" class="glass-btn" id="onboard-submit">进入赛博运势</button>
+      </div>
+    </div>
+  `, 'onboard-page')
+
+  let avatarIdx = AVATAR_PRESETS.indexOf(avatar)
+  if (avatarIdx < 0) avatarIdx = 0
+
+  document.getElementById('onboard-avatar-btn')?.addEventListener('click', () => {
+    avatarIdx = (avatarIdx + 1) % AVATAR_PRESETS.length
+    document.getElementById('onboard-avatar').src = AVATAR_PRESETS[avatarIdx]
+  })
+
+  const submit = () => {
+    const name = document.getElementById('onboard-name')?.value
+    const result = storage.completeOnboarding(name, AVATAR_PRESETS[avatarIdx])
+    if (!result.ok) {
+      const hint = document.getElementById('onboard-hint')
+      if (hint) {
+        hint.textContent = result.msg
+        hint.classList.add('onboard-error')
+      }
+      return
+    }
+    state.updateUserInfo({ nickname: result.nickname, avatarUrl: AVATAR_PRESETS[avatarIdx] })
+    storage.getUserId()
+    showToast('欢迎，' + result.nickname)
+    setShellVisible(true)
+    router()
+  }
+
+  document.getElementById('onboard-submit')?.addEventListener('click', submit)
+  document.getElementById('onboard-name')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submit()
+  })
+}
+
 async function router() {
+  if (!storage.isOnboarded()) {
+    renderOnboarding()
+    return
+  }
+
   const route = getRoute()
   setTabActive(route)
 
@@ -102,9 +178,7 @@ async function renderHome() {
         ${homeState.hasOfficialToday ? '<button class="glass-btn" id="btn-view">查看今日结果</button>' : ''}
         ${homeState.hasOfficialToday ? '<button class="glass-btn ghost" id="btn-regen">娱乐重抽</button>' : ''}
       </div>
-      <div class="loading-mask" id="loading-mask" hidden>
-        <span class="loading-text">宇宙 WiFi 连接中...</span>
-      </div>
+
     </div>
   `
   appEl.innerHTML = homeInner
@@ -131,9 +205,8 @@ async function startGenerate(isEntertainment) {
   homeState.loading = true
   homeState.animating = true
   const ball = document.getElementById('ball')
-  const mask = document.getElementById('loading-mask')
+  const homePage = document.querySelector('.home-page')
   ball?.classList.add('animating')
-  mask?.removeAttribute('hidden')
 
   setTimeout(() => {
     homeState.exploding = true
@@ -146,18 +219,22 @@ async function startGenerate(isEntertainment) {
     }
   }, 1200)
 
+  activeRitual?.destroy()
+  activeRitual = new FortuneLoadingRitual().mount(homePage).start()
+
   try {
     await fortune.generateAndSave(isEntertainment)
-    setTimeout(() => {
-      homeState.animating = false
-      homeState.exploding = false
-      homeState.loading = false
-      if (!isEntertainment) homeState.hasOfficialToday = true
-      navigate('result')
-    }, 2000)
+    await activeRitual.complete()
+    activeRitual = null
+    homeState.animating = false
+    homeState.exploding = false
+    homeState.loading = false
+    if (!isEntertainment) homeState.hasOfficialToday = true
+    navigate('result')
   } catch (err) {
+    activeRitual?.destroy()
+    activeRitual = null
     homeState = { ...homeState, animating: false, exploding: false, loading: false }
-    mask?.setAttribute('hidden', '')
     showToast(err.message || '生成失败')
     renderHome()
   }
@@ -589,7 +666,12 @@ async function renderProfile() {
   })
 
   document.getElementById('nickname')?.addEventListener('change', (e) => {
-    state.updateUserInfo({ ...state.getUserInfo(), nickname: e.target.value || '赛博旅人' })
+    const check = storage.validateNickname(e.target.value)
+    if (!check.ok) {
+      showToast(check.msg)
+      return
+    }
+    state.updateUserInfo({ ...state.getUserInfo(), nickname: check.value })
   })
 
   document.getElementById('btn-checkin')?.addEventListener('click', async () => {
@@ -616,4 +698,9 @@ bindTabBar()
 updateStatusClock()
 setInterval(updateStatusClock, 30000)
 window.addEventListener('hashchange', router)
-router()
+if (storage.isOnboarded()) {
+  setShellVisible(true)
+  router()
+} else {
+  renderOnboarding()
+}

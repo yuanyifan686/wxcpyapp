@@ -5,10 +5,14 @@
 const KEYS = {
   USER_ID: 'cyber_user_id',
   USER_INFO: 'cyber_user_info',
+  ONBOARDED: 'cyber_onboarded',
   TODAY_FORTUNE: 'cyber_today_fortune',
   TODAY_FORTUNE_DATE: 'cyber_today_fortune_date',
   FORTUNE_HISTORY: 'cyber_fortune_history',
 }
+
+const NICKNAME_MIN = 2
+const NICKNAME_MAX = 16
 
 const HISTORY_MAX = 30
 
@@ -39,11 +43,41 @@ function getUserId() {
 }
 
 function getUserInfo() {
-  return get(KEYS.USER_INFO, { nickname: '赛博旅人', avatarUrl: '' })
+  return get(KEYS.USER_INFO, { nickname: '', avatarUrl: '' })
 }
 
 function setUserInfo(info) {
   set(KEYS.USER_INFO, info)
+}
+
+function isOnboarded() {
+  if (get(KEYS.ONBOARDED, false) === true) return true
+  const info = getUserInfo()
+  const legacy = String(info.nickname || '').trim()
+  if (legacy.length >= NICKNAME_MIN) {
+    set(KEYS.ONBOARDED, true)
+    return true
+  }
+  return false
+}
+
+function validateNickname(name) {
+  const trimmed = String(name || '').trim()
+  if (trimmed.length < NICKNAME_MIN) {
+    return { ok: false, msg: '用户名至少 ' + NICKNAME_MIN + ' 个字符' }
+  }
+  if (trimmed.length > NICKNAME_MAX) {
+    return { ok: false, msg: '用户名最多 ' + NICKNAME_MAX + ' 个字符' }
+  }
+  return { ok: true, value: trimmed }
+}
+
+function completeOnboarding(nickname, avatarUrl) {
+  const check = validateNickname(nickname)
+  if (!check.ok) return check
+  setUserInfo({ nickname: check.value, avatarUrl: avatarUrl || '' })
+  set(KEYS.ONBOARDED, true)
+  return { ok: true, nickname: check.value }
 }
 
 function cacheTodayFortune(fortune) {
@@ -95,6 +129,9 @@ module.exports = {
   getUserId,
   getUserInfo,
   setUserInfo,
+  isOnboarded,
+  validateNickname,
+  completeOnboarding,
   cacheTodayFortune,
   getCachedTodayFortune,
   getLocalHistory,

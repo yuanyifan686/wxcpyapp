@@ -621,15 +621,185 @@ html, body {
 
 .actions { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
 
-.loading-mask {
-  position: fixed; inset: 0;
-  background: rgba(6, 6, 15, 0.85);
-  backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 200;
+/* ── Fortune loading ritual ── */
+.ritual-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px 100px;
+  background: rgba(6, 6, 15, 0.82);
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.35s ease;
 }
-.loading-mask[hidden] { display: none; }
-.loading-text { color: var(--accent); font-size: 14px; animation: breathe 1.5s ease infinite; letter-spacing: 1px; }
+
+.ritual-panel {
+  width: 100%;
+  max-width: 320px;
+  padding: 24px 20px 20px;
+  text-align: center;
+  border-color: rgba(108, 99, 255, 0.25);
+  box-shadow: 0 0 40px rgba(108, 99, 255, 0.15), var(--shadow-glass);
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.ritual-panel.ritual-success {
+  border-color: rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 48px rgba(34, 211, 238, 0.2), var(--shadow-glass);
+}
+
+.ritual-visual {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 18px;
+}
+.ritual-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgba(34, 211, 238, 0.35);
+  animation: orbitSpin 6s linear infinite;
+}
+.ritual-orbit.o2 {
+  inset: -10px;
+  border-color: rgba(168, 85, 247, 0.25);
+  animation-direction: reverse;
+  animation-duration: 9s;
+}
+.ritual-core {
+  position: absolute;
+  inset: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  animation: breathe 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(108, 99, 255, 0.5));
+}
+.ritual-sparks { position: absolute; inset: -8px; pointer-events: none; }
+.ritual-spark {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: float 2.5s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+.ritual-stage-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ritual-stage-badge {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+.ritual-elapsed { font-size: 10px; color: #64748B; font-variant-numeric: tabular-nums; }
+
+.ritual-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--text-primary);
+}
+.ritual-title.title-in { animation: titlePulse 0.4s ease; }
+@keyframes titlePulse {
+  from { opacity: 0.5; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ritual-msg {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  line-height: 1.5;
+  min-height: 18px;
+}
+
+.ritual-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.ritual-progress-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.ritual-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  background-size: 200% 100%;
+  animation: shimmer 2s ease infinite;
+  transition: width 0.15s ease-out;
+  position: relative;
+  z-index: 1;
+}
+.ritual-progress-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: progressScan 2s ease-in-out infinite;
+}
+@keyframes progressScan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.ritual-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ritual-flavor {
+  font-size: 11px;
+  color: #94A3B8;
+  margin: 0 0 14px;
+  min-height: 16px;
+  font-style: italic;
+}
+.ritual-flavor.flavor-in { animation: flavorIn 0.35s ease; }
+@keyframes flavorIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ritual-steps {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.ritual-step {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+.ritual-step.active {
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  transform: scale(1.2);
+}
+.ritual-step.done { background: var(--primary); opacity: 0.7; }
 
 /* ── Result ── */
 .result-wrap { position: relative; min-height: 100%; }
@@ -1090,6 +1260,71 @@ html, body {
   font-size: 11px;
   color: var(--gold);
 }
+
+/* ── Onboarding ── */
+.onboard-page .page-content { padding-top: 24px; }
+.onboard-card {
+  padding: 24px 20px;
+  margin-top: 8px;
+  text-align: center;
+}
+.onboard-avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.onboard-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid rgba(108, 99, 255, 0.5);
+  box-shadow: 0 0 24px rgba(108, 99, 255, 0.25);
+  object-fit: cover;
+}
+.onboard-avatar-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.onboard-label {
+  display: block;
+  text-align: left;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.onboard-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-primary);
+  font-size: 16px;
+  margin-bottom: 8px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.onboard-input:focus {
+  border-color: rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+.onboard-input::placeholder { color: #64748B; }
+.onboard-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 0 0 18px;
+  text-align: left;
+  min-height: 16px;
+}
+.onboard-hint.onboard-error { color: #F87171; }
 
 /* ── Toast & Modal ── */
 .toast {

@@ -1,0 +1,27 @@
+<view class="welcome-page">
+  <view class="bg-gradient"></view>
+  <view class="welcome-content container">
+    <view class="hero-chip"><view class="chip-dot"></view><text>WELCOME</text></view>
+    <text class="title gradient-text">欢迎来到赛博宇宙</text>
+    <text class="subtitle">取个名字，开启今日运势之旅</text>
+    <view class="hero-line"><view class="line-left"></view><view class="line-glow"></view><view class="line-right"></view></view>
+
+    <view class="onboard-card glass-card">
+      <view class="avatar-wrap">
+        <image class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
+        <text class="avatar-btn" bindtap="onChangeAvatar">换头像</text>
+      </view>
+      <text class="label">你的赛博用户名</text>
+      <input
+        class="name-input"
+        placeholder="2-16 个字符，例如：欧皇小明"
+        maxlength="16"
+        value="{{nickname}}"
+        bindinput="onNameInput"
+        bindconfirm="onSubmit"
+      />
+      <text class="hint {{hintError ? 'hint-error' : ''}}">{{hint}}</text>
+      <glass-button text="进入赛博运势" bind:tap="onSubmit" />
+    </view>
+  </view>
+</view>
