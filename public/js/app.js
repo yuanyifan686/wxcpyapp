@@ -1,11 +1,16 @@
 import * as fortune from './fortune.js'
 import * as state from './state.js'
-import { formatDisplay } from './date.js'
+import { formatDisplay, today, daysAgo, shiftDate, RANKING_HISTORY_DAYS } from './date.js'
 import { animateNumber, scoreToStars, levelColor } from './animation.js'
 import {
   escapeHtml, showToast, showConfirm, DEFAULT_AVATAR, AVATAR_PRESETS,
   renderBuffGrid, renderTags, renderStars,
 } from './ui.js'
+import {
+  wrapPage, renderPageHeader, renderCyberLoader, renderMarquee,
+  renderStatChips, renderNeonCard, rankMedal, levelBadgeClass,
+  initTabIcons, spawnParticles,
+} from './chrome.js'
 
 const appEl = document.getElementById('app')
 const tabBar = document.getElementById('tab-bar')
@@ -13,6 +18,7 @@ const TABS = ['home', 'history', 'ranking', 'profile']
 
 let homeState = { loading: false, animating: false, exploding: false, hasOfficialToday: false }
 let rankingRefreshBound = false
+let rankingSelectedDate = today()
 
 function navigate(path) {
   location.hash = '#/' + path
@@ -62,22 +68,28 @@ async function renderHome() {
   homeState.hasOfficialToday = !!record
   if (record) state.setCurrentFortune(record)
 
-  appEl.innerHTML = `
+  const homeInner = `
     <div class="home-page">
       <div class="bg-gradient"></div>
       <div class="stars">${stars.map((s) =>
         `<span class="star" style="left:${s.x}%;top:${s.y}%;animation-delay:${s.delay}s"></span>`
       ).join('')}</div>
       <header class="header fade-in">
-        <span class="logo">⚡ CYBER</span>
+        <span class="logo">⚡ CYBER FORTUNE v2.0</span>
         <h1 class="title gradient-text">今日赛博运势</h1>
         <p class="slogan">宇宙服务器今日已同步你的幸运值</p>
       </header>
+      ${renderMarquee(['AI 运势已上线', '每日正式签计入欧皇榜', 'SSR 触发全屏金光', '娱乐重抽不计入排名', '连续签到赢徽章'])}
+      ${renderStatChips([
+        { icon: '🎲', value: homeState.hasOfficialToday ? '已抽' : '待抽', label: '今日状态' },
+        { icon: '⚡', value: 'AI', label: 'Minimax 驱动' },
+        { icon: '👑', value: 'TOP100', label: '欧皇竞技' },
+      ])}
       <section class="ball-section">
         <div class="ball-wrap" id="fortune-ball">
-          <div class="particles">${Array.from({ length: 12 }, (_, i) =>
-            `<span class="particle" style="left:${10 + Math.random() * 80}%;top:${10 + Math.random() * 80}%;animation-delay:${Math.random() * 2}s"></span>`
-          ).join('')}</div>
+          <div class="orbit-ring orbit-ring-1"><span class="orbit-dot"></span></div>
+          <div class="orbit-ring orbit-ring-2"></div>
+          <div class="particles" id="ball-particles"></div>
           <div class="ball" id="ball">
             <div class="ball-inner">
               <div class="ball-glow"></div>
@@ -95,6 +107,8 @@ async function renderHome() {
       </div>
     </div>
   `
+  appEl.innerHTML = homeInner
+  spawnParticles(document.getElementById('ball-particles'), 18)
 
   document.getElementById('fortune-ball')?.addEventListener('click', onBallTap)
   document.getElementById('btn-view')?.addEventListener('click', () => navigate('result'))
@@ -162,12 +176,14 @@ async function renderResult() {
   const color = levelColor(f.level)
   const stars = scoreToStars(f.score)
 
-  appEl.innerHTML = `
+  appEl.innerHTML = wrapPage(`
     <div class="result-wrap">
       <div class="ssr-flash" id="ssr-flash" hidden></div>
       <div class="result-page">
         <button class="back-btn" id="back-home">← 返回</button>
-        <section class="score-section stagger-show">
+        <section class="score-section glass-card neon-card stagger-show">
+          <span class="corner tl"></span><span class="corner tr"></span>
+          <span class="corner bl"></span><span class="corner br"></span>
           <span class="score-label">今日幸运指数</span>
           <div class="stars-row">${renderStars(stars)}</div>
           <div class="score-num-wrap">
@@ -176,12 +192,14 @@ async function renderResult() {
           <span class="score-level level-badge" style="color:${color};border-color:${color}">${escapeHtml(f.level)}</span>
         </section>
         <div class="stagger-show" style="animation-delay:0.13s">
-          <div class="fortune-card glass-card">
+          ${renderNeonCard(`
+            <div class="fortune-card-inner">
             <span class="card-label">今日总结</span>
             <p class="card-summary">${escapeHtml(f.summary)}</p>
             <p class="card-fortune">${escapeHtml(f.fortune)}</p>
             <div class="card-keywords">${renderTags(f.keywords)}</div>
-          </div>
+            </div>
+          `)}
         </div>
         <div class="stagger-show" style="animation-delay:0.26s">
           <div class="energy-bar glass-card">
@@ -212,7 +230,7 @@ async function renderResult() {
         </div>
       </div>
     </div>
-  `
+  `, 'result-page')
 
   document.getElementById('back-home')?.addEventListener('click', () => navigate('home'))
   document.getElementById('back-home2')?.addEventListener('click', () => navigate('home'))
@@ -249,43 +267,61 @@ function copyShare(f, userInfo) {
     .catch(() => showToast('复制失败，请手动复制'))
 }
 
+function parseHistoryDate(dateStr) {
+  const d = new Date(dateStr.replace(/-/g, '/'))
+  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
+  return { day: String(d.getDate()).padStart(2, '0'), week: '周' + week }
+}
+
 /* ── History ── */
 async function renderHistory() {
-  appEl.innerHTML = `<div class="page container"><h1 class="page-title gradient-text">近 30 天运势</h1><div class="empty">加载中...</div></div>`
+  appEl.innerHTML = wrapPage(
+    renderPageHeader({ chip: 'ARCHIVE', title: '近 30 天运势', subtitle: '点击记录查看当日详情' })
+    + renderCyberLoader('读取时空档案'),
+    'history-page'
+  )
 
   const items = await fortune.getHistory(state.getUserId())
   if (!items.length) {
-    appEl.innerHTML = `
-      <div class="page container history-page">
-        <h1 class="page-title gradient-text">近 30 天运势</h1>
-        <div class="empty glass-card">
-          <p>暂无历史记录</p>
-          <button class="glass-btn" id="go-home">去抽签</button>
-        </div>
+    appEl.innerHTML = wrapPage(`
+      ${renderPageHeader({ chip: 'ARCHIVE', title: '近 30 天运势', subtitle: '你的运势时光机' })}
+      <div class="empty-card glass-card fade-in">
+        <span class="empty-icon">📡</span>
+        <h2 class="empty-title">时空档案为空</h2>
+        <p class="empty-desc">完成首次正式抽签后，记录将在此显示</p>
+        <button class="glass-btn" id="go-home">去抽签</button>
       </div>
-    `
+    `, 'history-page')
     document.getElementById('go-home')?.addEventListener('click', () => navigate('home'))
     return
   }
 
-  appEl.innerHTML = `
-    <div class="page container history-page">
-      <h1 class="page-title gradient-text">近 30 天运势</h1>
-      <div class="timeline">
-        ${items.map((item, i) => `
-          <div class="timeline-item glass-card fade-in" data-index="${i}">
-            <div class="item-date">${escapeHtml(formatDisplay(item.fortune_date))}</div>
-            <div class="item-body">
-              <span class="item-score" style="color:${levelColor(item.level)}">${item.score}%</span>
-              <span class="item-level">${escapeHtml(item.level)} · ${escapeHtml(item.title)}</span>
-              <span class="item-summary">${escapeHtml(item.summary)}</span>
+  appEl.innerHTML = wrapPage(`
+    ${renderPageHeader({ chip: 'ARCHIVE', title: '近 30 天运势', subtitle: `共 ${items.length} 条正式签记录` })}
+    <div class="timeline">
+      ${items.map((item, i) => {
+        const dt = parseHistoryDate(item.fortune_date)
+        const lc = levelColor(item.level)
+        return `
+          <div class="timeline-item fade-in" data-index="${i}" style="animation-delay:${i * 0.04}s">
+            <div class="timeline-card glass-card">
+              <div class="item-date-col">
+                <span class="item-date-day">${dt.day}</span>
+                <span class="item-date-week">${dt.week}</span>
+              </div>
+              <div class="item-body">
+                <span class="item-score" style="color:${lc}">${item.score}%</span>
+                <span class="item-level ${levelBadgeClass(item.level)}">${escapeHtml(item.level)}</span>
+                <span class="item-title">${escapeHtml(item.title)}</span>
+                <span class="item-summary">${escapeHtml(item.summary)}</span>
+              </div>
+              <span class="item-arrow">›</span>
             </div>
-            <span class="item-arrow">›</span>
           </div>
-        `).join('')}
-      </div>
+        `
+      }).join('')}
     </div>
-  `
+  `, 'history-page')
 
   appEl.querySelectorAll('.timeline-item').forEach((el) => {
     el.addEventListener('click', () => {
@@ -320,20 +356,77 @@ function formatUpdatedAt() {
   return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' 更新'
 }
 
-async function renderRanking(force = false) {
-  appEl.innerHTML = `
-    <div class="page container ranking-page">
-      <h1 class="page-title gradient-text">今日欧皇榜</h1>
-      <div class="page-head">
-        <span class="page-sub">按今日幸运值排序 · TOP100</span>
-        <span class="updated-at" id="updated-at"></span>
-      </div>
-      <div class="empty">加载中...</div>
+function clampRankingDate(dateStr) {
+  const min = daysAgo(RANKING_HISTORY_DAYS)
+  const max = today()
+  if (dateStr < min) return min
+  if (dateStr > max) return max
+  return dateStr
+}
+
+function buildRankingDateNav(date) {
+  const minDate = daysAgo(RANKING_HISTORY_DAYS)
+  const isToday = date === today()
+  const canPrev = date > minDate
+  const canNext = date < today()
+  return `
+    <div class="rank-date-nav glass-card">
+      <button type="button" class="date-nav-btn" id="rank-prev" ${canPrev ? '' : 'disabled'} aria-label="前一天">‹</button>
+      <label class="rank-date-label">
+        <span class="rank-date-text">${escapeHtml(formatDisplay(date))}</span>
+        <input type="date" class="rank-date-input" id="rank-date-pick" value="${date}" min="${minDate}" max="${today()}" />
+      </label>
+      <button type="button" class="date-nav-btn" id="rank-next" ${canNext ? '' : 'disabled'} aria-label="后一天">›</button>
     </div>
+    ${!isToday ? '<button type="button" class="rank-today-btn" id="rank-today">回到今日</button>' : ''}
   `
+}
+
+function bindRankingDateNav(date) {
+  document.getElementById('rank-prev')?.addEventListener('click', () => {
+    changeRankingDate(shiftDate(date, -1))
+  })
+  document.getElementById('rank-next')?.addEventListener('click', () => {
+    changeRankingDate(shiftDate(date, 1))
+  })
+  document.getElementById('rank-today')?.addEventListener('click', () => {
+    changeRankingDate(today())
+  })
+  document.getElementById('rank-date-pick')?.addEventListener('change', (e) => {
+    changeRankingDate(e.target.value)
+  })
+}
+
+async function changeRankingDate(newDate) {
+  rankingSelectedDate = clampRankingDate(newDate)
+  await renderRanking(false, rankingSelectedDate)
+}
+
+function getRankingCopy(date) {
+  const isToday = date === today()
+  return {
+    title: isToday ? '今日欧皇榜' : '历史欧皇榜',
+    sub: isToday ? '按今日幸运值排序 · TOP100' : `${formatDisplay(date)} · TOP100`,
+    statKey: isToday ? '今日参战' : '当日参战',
+    emptyTitle: isToday ? '今日欧皇榜虚位以待' : '该日欧皇榜暂无数据',
+    emptyDesc: isToday ? '完成正式抽签即可上榜' : '当日无人完成正式抽签',
+    showDrawBtn: isToday,
+  }
+}
+
+async function renderRanking(force = false, date = rankingSelectedDate) {
+  rankingSelectedDate = clampRankingDate(date)
+  const copy = getRankingCopy(rankingSelectedDate)
+
+  appEl.innerHTML = wrapPage(`
+    ${renderPageHeader({ chip: 'LEADERBOARD', title: copy.title, subtitle: copy.sub })}
+    ${buildRankingDateNav(rankingSelectedDate)}
+    ${renderCyberLoader('同步欧皇数据')}
+  `, 'ranking-page')
+  bindRankingDateNav(rankingSelectedDate)
 
   const myId = state.getUserId()
-  const items = await fortune.getRanking({ force })
+  const items = await fortune.getRanking({ force, date: rankingSelectedDate })
   const list = items.map((item, i) => ({
     ...item,
     rank: i + 1,
@@ -346,84 +439,80 @@ async function renderRanking(force = false) {
   const restList = list.length > 3 ? list.slice(3) : []
 
   if (!list.length) {
-    appEl.innerHTML = `
-      <div class="page container ranking-page">
-        <h1 class="page-title gradient-text">今日欧皇榜</h1>
-        <div class="page-head"><span class="page-sub">按今日幸运值排序 · TOP100</span></div>
-        <div class="empty-card glass-card">
-          <span class="empty-icon">👑</span>
-          <h2 class="empty-title">今日欧皇榜虚位以待</h2>
-          <p class="empty-desc">完成正式抽签即可上榜</p>
-          <button class="glass-btn" id="go-draw">去抽签</button>
-        </div>
+    appEl.innerHTML = wrapPage(`
+      ${renderPageHeader({ chip: 'LEADERBOARD', title: copy.title, subtitle: copy.sub })}
+      ${buildRankingDateNav(rankingSelectedDate)}
+      <div class="empty-card glass-card fade-in">
+        <span class="empty-icon">👑</span>
+        <h2 class="empty-title">${copy.emptyTitle}</h2>
+        <p class="empty-desc">${copy.emptyDesc}</p>
+        ${copy.showDrawBtn ? '<button class="glass-btn" id="go-draw">去抽签</button>' : ''}
       </div>
-    `
+    `, 'ranking-page')
+    bindRankingDateNav(rankingSelectedDate)
     document.getElementById('go-draw')?.addEventListener('click', () => navigate('home'))
     return
   }
 
-  appEl.innerHTML = `
-    <div class="page container ranking-page">
-      <h1 class="page-title gradient-text">今日欧皇榜</h1>
-      <div class="page-head">
-        <span class="page-sub">按今日幸运值排序 · TOP100</span>
-        <span class="updated-at">${formatUpdatedAt()}</span>
-      </div>
-      <div class="stats-bar glass-card fade-in">
-        <div class="stat-cell"><span class="stat-val">${list.length}</span><span class="stat-key">今日参战</span></div>
-        <div class="stat-cell"><span class="stat-val gradient-text">${list[0].score}%</span><span class="stat-key">最高幸运值</span></div>
-        <div class="stat-cell"><span class="stat-val">${myRankItem ? myRankItem.rank : '-'}</span><span class="stat-key">我的排名</span></div>
-      </div>
-      <div class="podium-section">
-        ${podium.map((item) => `
-          <div class="podium-item ${item.podiumClass} ${item.isMe ? 'is-me' : ''}">
-            ${item.rank === 1 ? '<span class="podium-crown">👑</span>' : ''}
-            <span class="level-tag" style="color:${item.levelColor};border-color:${item.levelColor}">${escapeHtml(item.level)}</span>
-            <img class="podium-avatar" src="${escapeHtml(item.avatar_url || DEFAULT_AVATAR)}" alt="" />
-            <span class="podium-rank">NO.${item.rank}</span>
-            <span class="podium-name">${escapeHtml(item.nickname)}${item.isMe ? ' (我)' : ''}</span>
-            <span class="podium-score">${item.score}%</span>
-            <span class="podium-ssr">累计 SSR ×${item.ssrCount || 0}</span>
-            <div class="podium-bar"></div>
+  appEl.innerHTML = wrapPage(`
+    ${renderPageHeader({ chip: 'LEADERBOARD', title: copy.title, subtitle: copy.sub })}
+    ${buildRankingDateNav(rankingSelectedDate)}
+    <div class="page-head"><span></span><span class="updated-at">${formatUpdatedAt()}</span></div>
+    <div class="stats-bar glass-card fade-in">
+      <div class="stat-cell"><span class="stat-val">${list.length}</span><span class="stat-key">${copy.statKey}</span></div>
+      <div class="stat-cell"><span class="stat-val gradient-text">${list[0].score}%</span><span class="stat-key">最高幸运值</span></div>
+      <div class="stat-cell"><span class="stat-val">${myRankItem ? myRankItem.rank : '-'}</span><span class="stat-key">我的排名</span></div>
+    </div>
+    <div class="podium-section">
+      ${podium.map((item) => `
+        <div class="podium-item ${item.podiumClass} ${item.isMe ? 'is-me' : ''}">
+          <span class="podium-medal">${rankMedal(item.rank) || (item.rank === 1 ? '👑' : '')}</span>
+          <span class="level-tag" style="color:${item.levelColor};border-color:${item.levelColor}">${escapeHtml(item.level)}</span>
+          <img class="podium-avatar" src="${escapeHtml(item.avatar_url || DEFAULT_AVATAR)}" alt="" />
+          <span class="podium-rank">NO.${item.rank}</span>
+          <span class="podium-name">${escapeHtml(item.nickname)}${item.isMe ? ' (我)' : ''}</span>
+          <span class="podium-score">${item.score}%</span>
+          <span class="podium-ssr">累计 SSR ×${item.ssrCount || 0}</span>
+          <div class="podium-bar"></div>
+        </div>
+      `).join('')}
+    </div>
+    ${restList.length ? `
+      <div class="rank-list">
+        ${restList.map((item, idx) => `
+          <div class="rank-item glass-card fade-in ${item.isMe ? 'is-me' : ''}" style="animation-delay:${idx * 0.03}s">
+            <span class="rank-no">${item.rank}</span>
+            <img class="rank-avatar" src="${escapeHtml(item.avatar_url || DEFAULT_AVATAR)}" alt="" />
+            <div class="rank-info">
+              <div class="name-row">
+                <span class="rank-name">${escapeHtml(item.nickname)}</span>
+                ${item.isMe ? '<span class="me-tag">我</span>' : ''}
+              </div>
+              <span class="rank-meta">${escapeHtml(item.title)}</span>
+            </div>
+            <div class="rank-right">
+              <span class="level-pill" style="color:${item.levelColor}">${escapeHtml(item.level)}</span>
+              <span class="rank-score">${item.score}%</span>
+              <span class="rank-ssr">SSR ×${item.ssrCount || 0}</span>
+            </div>
           </div>
         `).join('')}
       </div>
-      ${restList.length ? `
-        <div class="rank-list">
-          ${restList.map((item) => `
-            <div class="rank-item glass-card fade-in ${item.isMe ? 'is-me' : ''}">
-              <span class="rank-no">${item.rank}</span>
-              <img class="rank-avatar" src="${escapeHtml(item.avatar_url || DEFAULT_AVATAR)}" alt="" />
-              <div class="rank-info">
-                <div class="name-row">
-                  <span class="rank-name">${escapeHtml(item.nickname)}</span>
-                  ${item.isMe ? '<span class="me-tag">我</span>' : ''}
-                </div>
-                <span class="rank-meta">${escapeHtml(item.title)}</span>
-              </div>
-              <div class="rank-right">
-                <span class="level-pill" style="color:${item.levelColor}">${escapeHtml(item.level)}</span>
-                <span class="rank-score">${item.score}%</span>
-                <span class="rank-ssr">SSR ×${item.ssrCount || 0}</span>
-              </div>
-            </div>
-          `).join('')}
+    ` : ''}
+    <p class="rank-tip">左右切换日期查看近 ${RANKING_HISTORY_DAYS} 天榜单 · 下拉刷新</p>
+    ${myRankItem && myRankItem.rank > 8 ? `
+      <div class="my-rank-bar glass-card">
+        <span class="my-rank-no">#${myRankItem.rank}</span>
+        <img class="my-rank-avatar" src="${escapeHtml(myRankItem.avatar_url || DEFAULT_AVATAR)}" alt="" />
+        <div class="my-rank-info">
+          <span class="my-rank-name">我的排名</span>
+          <span class="my-rank-meta">${escapeHtml(myRankItem.title)}</span>
         </div>
-      ` : ''}
-      <p class="rank-tip">下拉刷新榜单 · 仅正式签计入排名</p>
-      ${myRankItem && myRankItem.rank > 8 ? `
-        <div class="my-rank-bar glass-card">
-          <span class="my-rank-no">#${myRankItem.rank}</span>
-          <img class="my-rank-avatar" src="${escapeHtml(myRankItem.avatar_url || DEFAULT_AVATAR)}" alt="" />
-          <div class="my-rank-info">
-            <span class="my-rank-name">我的排名</span>
-            <span class="my-rank-meta">${escapeHtml(myRankItem.title)}</span>
-          </div>
-          <span class="my-rank-score">${myRankItem.score}%</span>
-        </div>
-      ` : ''}
-    </div>
-  `
+        <span class="my-rank-score">${myRankItem.score}%</span>
+      </div>
+    ` : ''}
+  `, 'ranking-page')
+  bindRankingDateNav(rankingSelectedDate)
 
   if (!rankingRefreshBound) {
     rankingRefreshBound = true
@@ -434,7 +523,7 @@ async function renderRanking(force = false) {
       const diff = e.changedTouches[0].clientY - startY
       if (window.scrollY === 0 && diff > 80) {
         fortune.invalidateRankingCache()
-        await renderRanking(true)
+        await renderRanking(true, rankingSelectedDate)
         showToast('榜单已刷新')
       }
     }, { passive: true })
@@ -449,37 +538,44 @@ async function renderProfile() {
     badges: [], totalDraws: 0, maxScore: 0, avgScore: 0, ssrCount: 0, checkInStreak: 0, points: 0,
   }
 
-  appEl.innerHTML = `
-    <div class="page container profile-page">
-      <div class="user-card glass-card fade-in">
+  const xpPct = Math.min(100, Math.round((profile.points % 100)))
+  appEl.innerHTML = wrapPage(`
+    ${renderPageHeader({ chip: 'PROFILE', title: '赛博旅人档案', subtitle: '你的运势数据中枢' })}
+    <div class="user-card glass-card fade-in">
+      <div class="avatar-wrap">
+        <div class="avatar-ring"></div>
         <button class="avatar-btn" id="avatar-btn" type="button">
           <img class="avatar" src="${escapeHtml(avatar)}" alt="头像" />
         </button>
-        <input class="nickname-input" id="nickname" placeholder="输入昵称" value="${escapeHtml(userInfo.nickname || '')}" />
-        <p class="avatar-hint">点击头像切换 · 昵称自动保存</p>
       </div>
-      <div class="stats-grid">
-        <div class="stat-item glass-card"><span class="stat-num">${profile.totalDraws}</span><span class="stat-label">累计抽签</span></div>
-        <div class="stat-item glass-card"><span class="stat-num gradient-text">${profile.maxScore}</span><span class="stat-label">最高幸运值</span></div>
-        <div class="stat-item glass-card"><span class="stat-num">${profile.avgScore}</span><span class="stat-label">平均幸运值</span></div>
-        <div class="stat-item glass-card"><span class="stat-num">${profile.ssrCount}</span><span class="stat-label">SSR 次数</span></div>
+      <input class="nickname-input" id="nickname" placeholder="输入昵称" value="${escapeHtml(userInfo.nickname || '')}" />
+      <p class="avatar-hint">点击头像切换 · 昵称自动保存</p>
+      <div class="xp-bar-wrap">
+        <div class="xp-label"><span>积分等级</span><span>${profile.points} PT</span></div>
+        <div class="xp-track"><div class="xp-fill" style="width:${xpPct}%"></div></div>
       </div>
-      <div class="checkin-card glass-card fade-in">
-        <div class="checkin-row">
-          <h3 class="section-title">连续签到</h3>
-          <span class="checkin-days">${profile.checkInStreak} 天</span>
-        </div>
-        <span class="checkin-points">积分：${profile.points}</span>
-        <button class="glass-btn" id="btn-checkin">今日签到</button>
-      </div>
-      ${profile.badges.length ? `
-        <div class="badges-section glass-card fade-in">
-          <h3 class="section-title">获得徽章</h3>
-          <div class="badge-list">${profile.badges.map((b) => `<span class="badge-tag">🏅 ${escapeHtml(b)}</span>`).join('')}</div>
-        </div>
-      ` : ''}
     </div>
-  `
+    <div class="stats-grid">
+      <div class="stat-item glass-card fade-in"><span class="stat-icon">🎲</span><span class="stat-num">${profile.totalDraws}</span><span class="stat-label">累计抽签</span></div>
+      <div class="stat-item glass-card fade-in"><span class="stat-icon">⚡</span><span class="stat-num gradient-text">${profile.maxScore}</span><span class="stat-label">最高幸运值</span></div>
+      <div class="stat-item glass-card fade-in"><span class="stat-icon">📊</span><span class="stat-num">${profile.avgScore}</span><span class="stat-label">平均幸运值</span></div>
+      <div class="stat-item glass-card fade-in"><span class="stat-icon">✨</span><span class="stat-num">${profile.ssrCount}</span><span class="stat-label">SSR 次数</span></div>
+    </div>
+    <div class="checkin-card glass-card fade-in">
+      <div class="checkin-row">
+        <h3 class="section-title">连续签到</h3>
+        <span class="checkin-days">${profile.checkInStreak} 天</span>
+      </div>
+      <span class="checkin-points">当前积分 ${profile.points} · 签到 +10</span>
+      <button class="glass-btn" id="btn-checkin">今日签到</button>
+    </div>
+    ${profile.badges.length ? `
+      <div class="badges-section glass-card fade-in">
+        <h3 class="section-title">获得徽章</h3>
+        <div class="badge-list">${profile.badges.map((b) => `<span class="badge-tag">🏅 ${escapeHtml(b)}</span>`).join('')}</div>
+      </div>
+    ` : ''}
+  `, 'profile-page')
 
   let avatarIdx = AVATAR_PRESETS.indexOf(avatar)
   if (avatarIdx < 0) avatarIdx = 0
@@ -507,7 +603,17 @@ async function renderProfile() {
   })
 }
 
+function updateStatusClock() {
+  const el = document.getElementById('status-time')
+  if (!el) return
+  const d = new Date()
+  el.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+}
+
 /* ── Init ── */
+initTabIcons()
 bindTabBar()
+updateStatusClock()
+setInterval(updateStatusClock, 30000)
 window.addEventListener('hashchange', router)
 router()

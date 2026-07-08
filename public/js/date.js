@@ -18,6 +18,14 @@ export function daysAgo(n) {
   return formatDate(d)
 }
 
+export function shiftDate(dateStr, delta) {
+  const d = new Date(dateStr.replace(/-/g, '/'))
+  d.setDate(d.getDate() + delta)
+  return formatDate(d)
+}
+
+export const RANKING_HISTORY_DAYS = 30
+
 export function formatDisplay(dateStr) {
   const d = new Date(dateStr.replace(/-/g, '/'))
   const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]

@@ -89,15 +89,19 @@ export function queryFortuneHistory(openid, limit) {
   })
 }
 
-export function queryTodayRanking(limit) {
+export function queryRankingByDate(fortuneDate, limit) {
   return queryRecords(DB_KEY_MAP.fortuneRecords, {
     filter: equalFilter([
-      { field: 'fortune_date', value: today() },
+      { field: 'fortune_date', value: fortuneDate },
       { field: 'is_official', value: '1' },
     ]),
     orderBy: [{ field_name: 'score', direction: 'desc' }],
     pageSize: limit || 100,
   })
+}
+
+export function queryTodayRanking(limit) {
+  return queryRankingByDate(today(), limit)
 }
 
 export function queryUser(openid) {

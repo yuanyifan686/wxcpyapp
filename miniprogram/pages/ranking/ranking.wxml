@@ -1,14 +1,26 @@
 <view class="ranking-page container">
-  <text class="page-title gradient-text">今日欧皇榜</text>
+  <text class="page-title gradient-text">{{pageTitle}}</text>
+
+  <view class="rank-date-nav glass-card">
+    <view class="date-nav-btn {{canPrev ? '' : 'disabled'}}" bindtap="onPrevDate">‹</view>
+    <picker mode="date" value="{{selectedDate}}" start="{{minDate}}" end="{{maxDate}}" bindchange="onDatePick">
+      <view class="rank-date-label">
+        <text class="rank-date-text">{{dateDisplay}}</text>
+      </view>
+    </picker>
+    <view class="date-nav-btn {{canNext ? '' : 'disabled'}}" bindtap="onNextDate">›</view>
+  </view>
+  <view wx:if="{{!isToday}}" class="rank-today-btn" bindtap="goToday">回到今日</view>
+
   <view class="page-head">
-    <text class="page-sub">按今日幸运值排序 · TOP100</text>
+    <text class="page-sub">{{pageSub}}</text>
     <text wx:if="{{updatedAtText}}" class="updated-at">{{updatedAtText}}</text>
   </view>
 
   <view wx:if="{{!loading && list.length}}" class="stats-bar glass-card fade-in">
     <view class="stat-cell">
       <text class="stat-val">{{list.length}}</text>
-      <text class="stat-key">今日参战</text>
+      <text class="stat-key">{{statKey}}</text>
     </view>
     <view class="stat-cell">
       <text class="stat-val gradient-text">{{topScore}}%</text>
@@ -23,9 +35,9 @@
   <view wx:if="{{loading}}" class="empty">加载中...</view>
   <view wx:elif="{{!list.length}}" class="empty-card glass-card">
     <text class="empty-icon">👑</text>
-    <text class="empty-title">今日欧皇榜虚位以待</text>
-    <text class="empty-desc">完成正式抽签即可上榜</text>
-    <glass-button text="去抽签" bind:tap="goHome" />
+    <text class="empty-title">{{emptyTitle}}</text>
+    <text class="empty-desc">{{emptyDesc}}</text>
+    <glass-button wx:if="{{showDrawBtn}}" text="去抽签" bind:tap="goHome" />
   </view>
 
   <block wx:else>
@@ -69,7 +81,7 @@
       </view>
     </view>
 
-    <view class="rank-tip">下拉刷新榜单 · 仅正式签计入排名</view>
+    <view class="rank-tip">左右切换日期查看近 {{historyDays}} 天榜单 · 下拉刷新</view>
   </block>
 
   <view wx:if="{{myRankItem}}" class="my-rank-bar glass-card">

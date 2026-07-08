@@ -223,11 +223,10 @@ function getUsersSsrMapForOpenids(openids) {
     .catch(() => ({}))
 }
 
-function getTodayLocalRankingRecords() {
-  const date = today()
+function getLocalRankingRecords(date) {
   const userId = getApp().globalData.userId || storage.getUserId()
   const userInfo = getApp().globalData.userInfo || storage.getUserInfo()
-  const cached = storage.getCachedTodayFortune(date)
+  const cached = date === today() ? storage.getCachedTodayFortune(date) : null
   const fromHistory = storage.getLocalHistory().filter(
     (item) => item.fortune_date === date && item.is_official
   )
@@ -273,14 +272,13 @@ function mergeRankingList(cloudList, localList, ssrMap) {
     .slice(0, 100)
 }
 
-function fetchCloudRanking() {
-  const date = today()
+function fetchCloudRanking(date) {
   if (proxy.useProxy()) {
     return proxy.proxyRequest('/ranking?date=' + date, 'GET', null)
       .then((data) => ((data && data.items) || []))
   }
 
-  return coze.queryTodayRanking(100).then((rankData) => {
+  return coze.queryRankingByDate(date, 100).then((rankData) => {
     const cloudList = ((rankData && rankData.items) || []).map(parseRecord)
     const openids = cloudList.map((item) => item.openid).filter(Boolean)
     return getUsersSsrMapForOpenids(openids).then((ssrMap) =>
@@ -291,8 +289,8 @@ function fetchCloudRanking() {
 
 function getRanking(options) {
   const force = options && options.force
-  const date = today()
-  const localToday = getTodayLocalRankingRecords()
+  const date = (options && options.date) || today()
+  const localRecords = getLocalRankingRecords(date)
   const now = Date.now()
 
   if (
@@ -301,18 +299,18 @@ function getRanking(options) {
     && rankingCache.items
     && now - rankingCache.updatedAt < RANKING_CACHE_TTL
   ) {
-    return Promise.resolve(mergeRankingList(rankingCache.items, localToday, {}))
+    return Promise.resolve(mergeRankingList(rankingCache.items, localRecords, {}))
   }
 
-  return fetchCloudRanking()
+  return fetchCloudRanking(date)
     .then((cloudItems) => {
-      const merged = mergeRankingList(cloudItems, localToday, {})
+      const merged = mergeRankingList(cloudItems, localRecords, {})
       rankingCache = { date, items: cloudItems, updatedAt: Date.now() }
       return merged
     })
     .catch((err) => {
-      console.warn('榜单查询失败，使用本地今日记录', err)
-      return mergeRankingList([], localToday, {})
+      console.warn('榜单查询失败，使用本地记录', err)
+      return mergeRankingList([], localRecords, {})
     })
 }
 

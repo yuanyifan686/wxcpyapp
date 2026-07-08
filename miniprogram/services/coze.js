@@ -189,16 +189,20 @@ function queryFortuneHistory(openid, limit) {
   })
 }
 
-function queryTodayRanking(limit) {
-  const { today } = require('../utils/date.js')
+function queryRankingByDate(fortuneDate, limit) {
   return queryRecords(DB_KEY_MAP.fortuneRecords, {
     filter: equalFilter([
-      { field: 'fortune_date', value: today() },
+      { field: 'fortune_date', value: fortuneDate },
       { field: 'is_official', value: '1' },
     ]),
     orderBy: [{ field_name: 'score', direction: 'desc' }],
     pageSize: limit || 100,
   })
+}
+
+function queryTodayRanking(limit) {
+  const { today } = require('../utils/date.js')
+  return queryRankingByDate(today(), limit)
 }
 
 function queryUser(openid) {
@@ -233,6 +237,7 @@ module.exports = {
   insertFortuneRecord,
   queryFortuneByUserAndDate,
   queryFortuneHistory,
+  queryRankingByDate,
   queryTodayRanking,
   queryUser,
   queryUsersByOpenids,

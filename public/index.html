@@ -6,29 +6,52 @@
   <meta name="description" content="今日赛博运势 - AI 生成你的打工人幸运值" />
   <meta name="theme-color" content="#0a0a12" />
   <title>今日赛博运势</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
+  <div class="viewport-bg" aria-hidden="true">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-grid"></div>
+  </div>
+
   <div class="app-shell">
-    <main id="app"></main>
-    <nav id="tab-bar" class="tab-bar">
-      <button class="tab-item active" data-tab="home" type="button">
-        <span class="tab-icon icon-fortune"></span>
-        <span class="tab-text">运势</span>
-      </button>
-      <button class="tab-item" data-tab="history" type="button">
-        <span class="tab-icon icon-history"></span>
-        <span class="tab-text">历史</span>
-      </button>
-      <button class="tab-item" data-tab="ranking" type="button">
-        <span class="tab-icon icon-rank"></span>
-        <span class="tab-text">欧皇榜</span>
-      </button>
-      <button class="tab-item" data-tab="profile" type="button">
-        <span class="tab-icon icon-profile"></span>
-        <span class="tab-text">我的</span>
-      </button>
-    </nav>
+    <div class="device-frame">
+      <div class="status-bar">
+        <span class="status-time" id="status-time">00:00</span>
+        <span class="status-brand">CYBER FORTUNE</span>
+        <span class="status-icons">
+          <span class="signal"></span>
+          <span class="wifi"></span>
+          <span class="battery"></span>
+        </span>
+      </div>
+      <main id="app"></main>
+      <nav id="tab-bar" class="tab-bar">
+        <button class="tab-item active" data-tab="home" type="button">
+          <span class="tab-icon"></span>
+          <span class="tab-text">运势</span>
+          <span class="tab-glow"></span>
+        </button>
+        <button class="tab-item" data-tab="history" type="button">
+          <span class="tab-icon"></span>
+          <span class="tab-text">历史</span>
+          <span class="tab-glow"></span>
+        </button>
+        <button class="tab-item" data-tab="ranking" type="button">
+          <span class="tab-icon"></span>
+          <span class="tab-text">欧皇榜</span>
+          <span class="tab-glow"></span>
+        </button>
+        <button class="tab-item" data-tab="profile" type="button">
+          <span class="tab-icon"></span>
+          <span class="tab-text">我的</span>
+          <span class="tab-glow"></span>
+        </button>
+      </nav>
+    </div>
   </div>
   <script type="module" src="/js/app.js"></script>
 </body>

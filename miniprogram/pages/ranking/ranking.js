@@ -1,9 +1,24 @@
 const fortuneService = require('../../services/fortune.js')
 const { levelColor } = require('../../utils/animation.js')
+const {
+  today,
+  daysAgo,
+  shiftDate,
+  formatDisplay,
+  RANKING_HISTORY_DAYS,
+} = require('../../utils/date.js')
 
 const DEFAULT_AVATAR = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 
 const PODIUM_CLASS = ['second', 'first', 'third']
+
+function clampRankingDate(dateStr) {
+  const min = daysAgo(RANKING_HISTORY_DAYS)
+  const max = today()
+  if (dateStr < min) return min
+  if (dateStr > max) return max
+  return dateStr
+}
 
 function buildPodium(top3) {
   if (!top3.length) return []
@@ -40,7 +55,32 @@ function formatUpdatedAt(ts) {
   return h + ':' + m + ' 更新'
 }
 
-function applyRankingList(page, items, myId) {
+function getRankingCopy(date) {
+  const isToday = date === today()
+  return {
+    pageTitle: isToday ? '今日欧皇榜' : '历史欧皇榜',
+    pageSub: isToday ? '按今日幸运值排序 · TOP100' : formatDisplay(date) + ' · TOP100',
+    statKey: isToday ? '今日参战' : '当日参战',
+    emptyTitle: isToday ? '今日欧皇榜虚位以待' : '该日欧皇榜暂无数据',
+    emptyDesc: isToday ? '完成正式抽签即可上榜' : '当日无人完成正式抽签',
+    showDrawBtn: isToday,
+  }
+}
+
+function buildDateMeta(date) {
+  const minDate = daysAgo(RANKING_HISTORY_DAYS)
+  return {
+    selectedDate: date,
+    dateDisplay: formatDisplay(date),
+    isToday: date === today(),
+    canPrev: date > minDate,
+    canNext: date < today(),
+    minDate,
+    maxDate: today(),
+  }
+}
+
+function applyRankingList(page, items, myId, date) {
   const list = (items || []).map((item, index) =>
     enrichItem({ ...item, rank: index + 1 }, myId)
   )
@@ -49,6 +89,7 @@ function applyRankingList(page, items, myId) {
   const podium = buildPodium(top3)
   const restList = list.length > 3 ? list.slice(3) : []
   const showMyBar = !!(myRankItem && myRankItem.rank > 8)
+  const copy = getRankingCopy(date)
 
   page.setData({
     list,
@@ -59,6 +100,13 @@ function applyRankingList(page, items, myId) {
     myRank: myRankItem ? myRankItem.rank : 0,
     loading: false,
     updatedAtText: formatUpdatedAt(Date.now()),
+    statKey: copy.statKey,
+    emptyTitle: copy.emptyTitle,
+    emptyDesc: copy.emptyDesc,
+    showDrawBtn: copy.showDrawBtn,
+    pageTitle: copy.pageTitle,
+    pageSub: copy.pageSub,
+    ...buildDateMeta(date),
   })
 }
 
@@ -73,6 +121,20 @@ Page({
     topScore: 0,
     myRank: 0,
     updatedAtText: '',
+    selectedDate: today(),
+    dateDisplay: '',
+    isToday: true,
+    canPrev: false,
+    canNext: false,
+    minDate: daysAgo(RANKING_HISTORY_DAYS),
+    maxDate: today(),
+    pageTitle: '今日欧皇榜',
+    pageSub: '按今日幸运值排序 · TOP100',
+    statKey: '今日参战',
+    emptyTitle: '今日欧皇榜虚位以待',
+    emptyDesc: '完成正式抽签即可上榜',
+    showDrawBtn: true,
+    historyDays: RANKING_HISTORY_DAYS,
   },
 
   onShow() {
@@ -82,17 +144,50 @@ Page({
     this.loadRanking()
   },
 
-  loadRanking(force) {
+  loadRanking(force, date) {
+    const selectedDate = clampRankingDate(date || this.data.selectedDate)
     const myId = getApp().globalData.userId
+    const copy = getRankingCopy(selectedDate)
+
     if (!this.data.list.length || force) {
-      this.setData({ loading: true })
+      this.setData({
+        loading: true,
+        selectedDate,
+        ...buildDateMeta(selectedDate),
+        pageTitle: copy.pageTitle,
+        pageSub: copy.pageSub,
+        statKey: copy.statKey,
+        emptyTitle: copy.emptyTitle,
+        emptyDesc: copy.emptyDesc,
+        showDrawBtn: copy.showDrawBtn,
+      })
     }
 
-    return fortuneService.getRanking({ force: !!force }).then((items) => {
-      applyRankingList(this, items, myId)
+    return fortuneService.getRanking({ force: !!force, date: selectedDate }).then((items) => {
+      applyRankingList(this, items, myId, selectedDate)
     }).catch(() => {
       this.setData({ loading: false })
     })
+  },
+
+  onPrevDate() {
+    if (!this.data.canPrev) return
+    this.loadRanking(false, shiftDate(this.data.selectedDate, -1))
+  },
+
+  onNextDate() {
+    if (!this.data.canNext) return
+    this.loadRanking(false, shiftDate(this.data.selectedDate, 1))
+  },
+
+  onDatePick(e) {
+    const value = e.detail.value
+    if (!value) return
+    this.loadRanking(false, value)
+  },
+
+  goToday() {
+    this.loadRanking(false, today())
   },
 
   goHome() {
