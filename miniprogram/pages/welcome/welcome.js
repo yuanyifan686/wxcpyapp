@@ -14,15 +14,11 @@ Page({
     nickname: '',
     avatarUrl: AVATARS[0],
     avatarIdx: 0,
-    hint: '将用于排行榜展示与运势签文',
+    hint: '昵称仅用于本次访问的排行榜与运势展示',
     hintError: false,
   },
 
   onLoad() {
-    if (storage.isOnboarded()) {
-      wx.switchTab({ url: '/pages/home/home' })
-      return
-    }
     storage.getUserId()
     const idx = Math.floor(Math.random() * AVATARS.length)
     this.setData({ avatarUrl: AVATARS[idx], avatarIdx: idx })
@@ -31,7 +27,7 @@ Page({
   onNameInput(e) {
     this.setData({
       nickname: e.detail.value,
-      hint: '将用于排行榜展示与运势签文',
+      hint: '昵称仅用于本次访问的排行榜与运势展示',
       hintError: false,
     })
   },
@@ -42,7 +38,7 @@ Page({
   },
 
   onSubmit() {
-    const result = storage.completeOnboarding(this.data.nickname, this.data.avatarUrl)
+    const result = storage.saveNickname(this.data.nickname, this.data.avatarUrl)
     if (!result.ok) {
       this.setData({ hint: result.msg, hintError: true })
       return

@@ -2,8 +2,7 @@
   <view class="bg-gradient"></view>
   <view class="welcome-content container">
     <view class="hero-chip"><view class="chip-dot"></view><text>WELCOME</text></view>
-    <text class="title gradient-text">欢迎来到赛博宇宙</text>
-    <text class="subtitle">取个名字，开启今日运势之旅</text>
+    <text class="title gradient-text">请先输入昵称</text>
     <view class="hero-line"><view class="line-left"></view><view class="line-glow"></view><view class="line-right"></view></view>
 
     <view class="onboard-card glass-card">

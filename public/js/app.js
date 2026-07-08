@@ -22,6 +22,7 @@ let homeState = { loading: false, animating: false, exploding: false, hasOfficia
 let activeRitual = null
 let rankingRefreshBound = false
 let rankingSelectedDate = today()
+let sessionReady = false
 
 function navigate(path) {
   location.hash = '#/' + path
@@ -54,7 +55,7 @@ function renderOnboarding() {
 
   appEl.innerHTML = wrapPage(`
     <div class="onboard-page">
-      ${renderPageHeader({ chip: 'WELCOME', title: '欢迎来到赛博宇宙', subtitle: '取个名字，开启今日运势之旅' })}
+      ${renderPageHeader({ chip: 'WELCOME', title: '请先输入昵称' })}
       <div class="onboard-card neon-card glass-card fade-in">
         <span class="corner tl"></span><span class="corner tr"></span>
         <span class="corner bl"></span><span class="corner br"></span>
@@ -71,7 +72,7 @@ function renderOnboarding() {
           placeholder="2-16 个字符，例如：欧皇小明"
           autocomplete="nickname"
         />
-        <p class="onboard-hint" id="onboard-hint">将用于排行榜展示与运势签文</p>
+        <p class="onboard-hint" id="onboard-hint">昵称仅用于本次访问的排行榜与运势展示</p>
         <button type="button" class="glass-btn" id="onboard-submit">进入赛博运势</button>
       </div>
     </div>
@@ -87,7 +88,7 @@ function renderOnboarding() {
 
   const submit = () => {
     const name = document.getElementById('onboard-name')?.value
-    const result = storage.completeOnboarding(name, AVATAR_PRESETS[avatarIdx])
+    const result = storage.saveNickname(name, AVATAR_PRESETS[avatarIdx])
     if (!result.ok) {
       const hint = document.getElementById('onboard-hint')
       if (hint) {
@@ -98,6 +99,7 @@ function renderOnboarding() {
     }
     state.updateUserInfo({ nickname: result.nickname, avatarUrl: AVATAR_PRESETS[avatarIdx] })
     storage.getUserId()
+    sessionReady = true
     showToast('欢迎，' + result.nickname)
     setShellVisible(true)
     router()
@@ -110,7 +112,7 @@ function renderOnboarding() {
 }
 
 async function router() {
-  if (!storage.isOnboarded()) {
+  if (!sessionReady) {
     renderOnboarding()
     return
   }
@@ -698,9 +700,4 @@ bindTabBar()
 updateStatusClock()
 setInterval(updateStatusClock, 30000)
 window.addEventListener('hashchange', router)
-if (storage.isOnboarded()) {
-  setShellVisible(true)
-  router()
-} else {
-  renderOnboarding()
-}
+renderOnboarding()

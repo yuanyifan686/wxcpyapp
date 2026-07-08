@@ -5,9 +5,25 @@ const config = require('../config/index.js')
 const proxy = require('../utils/proxy.js')
 const { today } = require('../utils/date.js')
 
+const LEVEL_WEIGHTS = [
+  { level: 'SSR', weight: 0.5 },
+  { level: 'SR', weight: 0.1668 },
+  { level: 'R', weight: 0.1668 },
+  { level: 'N', weight: 0.1668 },
+]
+
+const LEVEL_SCORE_RANGE = {
+  SSR: [88, 100],
+  SR: [72, 87],
+  R: [55, 71],
+  N: [35, 54],
+}
+
 const SYSTEM_PROMPT = [
   '你是《今日赛博运势》AI，为年轻人生成赛博朋克风格的娱乐运势。',
   '风格：幽默、打工人梗、互联网语感、科技感，禁止传统算命黄历话术。',
+  '重要：level 和 score 由系统预先指定，你必须原样写入 JSON，不得修改。',
+  '根据指定等级撰写匹配的 summary、fortune、oneLine、title、keywords、buff、avoid 等文案。',
   '必须只返回合法 JSON，不要 markdown，不要解释。',
   'JSON 格式：',
   '{"level":"SSR|SR|R|N","score":0-100,"fishIndex":0-100,"bossRisk":0-100,',
@@ -21,9 +37,37 @@ const SYSTEM_PROMPT = [
 const RETRY_COUNT = 2
 const TIMEOUT_MS = 30000
 
-function buildUserPrompt() {
-  const date = today()
-  return '请为 ' + date + ' 生成一份全新的赛博打工人今日运势 JSON。level 按概率：SSR 10%, SR 25%, R 40%, N 25%。内容要有创意和梗。'
+function rollLevel() {
+  const r = Math.random()
+  let acc = 0
+  for (let i = 0; i < LEVEL_WEIGHTS.length; i++) {
+    acc += LEVEL_WEIGHTS[i].weight
+    if (r < acc) return LEVEL_WEIGHTS[i].level
+  }
+  return 'N'
+}
+
+function rollScoreForLevel(level) {
+  const range = LEVEL_SCORE_RANGE[level] || LEVEL_SCORE_RANGE.R
+  return range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1))
+}
+
+function buildUserPrompt(rolledLevel, rolledScore) {
+  const range = LEVEL_SCORE_RANGE[rolledLevel]
+  const toneMap = {
+    SSR: '欧皇附体、天降好运、诸事顺遂',
+    SR: '运势不错、小有惊喜、稳中求进',
+    R: '平平无奇、打工人日常、靠实力吃饭',
+    N: '略带倒霉、自嘲幽默、小心踩坑',
+  }
+  const tone = toneMap[rolledLevel] || ''
+
+  return [
+    '请为 ' + today() + ' 生成一份赛博打工人今日运势 JSON。',
+    '系统已锁定：level 必须为 "' + rolledLevel + '"，score 必须为 ' + rolledScore + '。',
+    '幸运值允许范围 ' + range[0] + '-' + range[1] + '，请使用指定 score。',
+    '文案气质：' + tone + '。内容要有创意和梗，title 称号要贴合等级。',
+  ].join('')
 }
 
 function requestMinimax(messages) {
@@ -75,7 +119,7 @@ function extractContent(response) {
   throw new Error('Minimax 响应格式异常')
 }
 
-function parseFortuneJson(text) {
+function parseFortuneJson(text, preset) {
   let raw = text.trim()
   const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
   if (codeBlock) raw = codeBlock[1].trim()
@@ -83,7 +127,7 @@ function parseFortuneJson(text) {
   const end = raw.lastIndexOf('}')
   if (start >= 0 && end > start) raw = raw.slice(start, end + 1)
   const data = JSON.parse(raw)
-  return normalizeFortune(data)
+  return normalizeFortune(data, preset)
 }
 
 function clampScore(n, fallback) {
@@ -92,12 +136,21 @@ function clampScore(n, fallback) {
   return Math.max(0, Math.min(100, Math.round(v)))
 }
 
-function normalizeFortune(data) {
+function clampScoreToLevel(score, level) {
+  const range = LEVEL_SCORE_RANGE[level] || LEVEL_SCORE_RANGE.R
+  return Math.max(range[0], Math.min(range[1], clampScore(score, range[0])))
+}
+
+function normalizeFortune(data, preset) {
   const buff = data.buff || {}
-  const level = data.level || 'R'
+  const level = (preset && preset.level) || data.level || 'R'
+  const score = preset
+    ? preset.score
+    : clampScoreToLevel(data.score, level)
+
   return {
     level,
-    score: clampScore(data.score, 70),
+    score,
     fishIndex: Number(data.fishIndex) || 70,
     bossRisk: Number(data.bossRisk) || 50,
     summary: data.summary || '今天宇宙信号满格，适合主动出击。',
@@ -123,11 +176,16 @@ function normalizeFortune(data) {
   }
 }
 
-function mockFortune() {
-  const levels = ['SSR', 'SR', 'R', 'N']
-  const titles = ['SSR人类', '摸鱼大师', 'Bug猎人', '卷王觉醒', '欧皇附体', '幸运NPC']
-  const level = levels[Math.floor(Math.random() * levels.length)]
-  const score = level === 'SSR' ? 88 + Math.floor(Math.random() * 12) : 55 + Math.floor(Math.random() * 35)
+function mockFortune(preset) {
+  const level = (preset && preset.level) || rollLevel()
+  const score = (preset && preset.score) || rollScoreForLevel(level)
+  const titles = {
+    SSR: ['SSR人类', '欧皇附体', '天选打工人', '宇宙宠儿'],
+    SR: ['摸鱼大师', 'Bug猎人', '卷王觉醒'],
+    R: ['幸运NPC', '社畜本畜', '打工仙人'],
+    N: ['非酋体验卡', '水逆幸存者', '摆烂艺术家'],
+  }
+  const pool = titles[level] || titles.R
   return normalizeFortune({
     level,
     score,
@@ -143,27 +201,32 @@ function mockFortune() {
       weather: '晴', career: '程序员', pet: '猫',
     },
     avoid: ['熬夜', '冲动消费', '迟到'],
-    title: titles[Math.floor(Math.random() * titles.length)],
-  })
+    title: pool[Math.floor(Math.random() * pool.length)],
+  }, { level, score })
 }
 
 function generateFortune(useMock) {
+  const rolledLevel = rollLevel()
+  const rolledScore = rollScoreForLevel(rolledLevel)
+  const preset = { level: rolledLevel, score: rolledScore }
+
   if (useMock) {
-    return Promise.resolve(mockFortune())
+    return Promise.resolve(mockFortune(preset))
   }
+
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: buildUserPrompt() },
+    { role: 'user', content: buildUserPrompt(rolledLevel, rolledScore) },
   ]
 
   function attempt(left) {
     return requestMinimax(messages)
       .then(extractContent)
-      .then(parseFortuneJson)
+      .then((content) => parseFortuneJson(content, preset))
       .catch((err) => {
         if (left > 0) return attempt(left - 1)
         console.warn('Minimax 失败，使用本地 mock', err)
-        return mockFortune()
+        return mockFortune(preset)
       })
   }
 
@@ -174,4 +237,6 @@ module.exports = {
   generateFortune,
   mockFortune,
   normalizeFortune,
+  rollLevel,
+  rollScoreForLevel,
 }

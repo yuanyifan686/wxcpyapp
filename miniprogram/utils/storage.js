@@ -5,7 +5,7 @@
 const KEYS = {
   USER_ID: 'cyber_user_id',
   USER_INFO: 'cyber_user_info',
-  ONBOARDED: 'cyber_onboarded',
+
   TODAY_FORTUNE: 'cyber_today_fortune',
   TODAY_FORTUNE_DATE: 'cyber_today_fortune_date',
   FORTUNE_HISTORY: 'cyber_fortune_history',
@@ -50,17 +50,6 @@ function setUserInfo(info) {
   set(KEYS.USER_INFO, info)
 }
 
-function isOnboarded() {
-  if (get(KEYS.ONBOARDED, false) === true) return true
-  const info = getUserInfo()
-  const legacy = String(info.nickname || '').trim()
-  if (legacy.length >= NICKNAME_MIN) {
-    set(KEYS.ONBOARDED, true)
-    return true
-  }
-  return false
-}
-
 function validateNickname(name) {
   const trimmed = String(name || '').trim()
   if (trimmed.length < NICKNAME_MIN) {
@@ -72,11 +61,10 @@ function validateNickname(name) {
   return { ok: true, value: trimmed }
 }
 
-function completeOnboarding(nickname, avatarUrl) {
+function saveNickname(nickname, avatarUrl) {
   const check = validateNickname(nickname)
   if (!check.ok) return check
   setUserInfo({ nickname: check.value, avatarUrl: avatarUrl || '' })
-  set(KEYS.ONBOARDED, true)
   return { ok: true, nickname: check.value }
 }
 
@@ -129,9 +117,8 @@ module.exports = {
   getUserId,
   getUserInfo,
   setUserInfo,
-  isOnboarded,
   validateNickname,
-  completeOnboarding,
+  saveNickname,
   cacheTodayFortune,
   getCachedTodayFortune,
   getLocalHistory,

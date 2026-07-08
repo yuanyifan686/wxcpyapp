@@ -1,6 +1,5 @@
 const fortuneService = require('../../services/fortune.js')
 const ritualUtil = require('../../utils/loading-ritual.js')
-const storage = require('../../utils/storage.js')
 
 Page({
   data: {
@@ -23,10 +22,6 @@ Page({
   },
 
   onShow() {
-    if (!storage.isOnboarded()) {
-      wx.redirectTo({ url: '/pages/welcome/welcome' })
-      return
-    }
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
