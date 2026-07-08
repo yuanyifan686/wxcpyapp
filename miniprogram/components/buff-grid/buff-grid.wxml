@@ -1,0 +1,10 @@
+<view class="buff-grid glass-card">
+  <view class="grid-title">今日 BUFF</view>
+  <view class="grid">
+    <view wx:for="{{items}}" wx:key="label" class="grid-item fade-in" style="animation-delay:{{index * 0.05}}s;">
+      <text class="item-emoji">{{item.emoji}}</text>
+      <text class="item-label">{{item.label}}</text>
+      <text class="item-value">{{item.value}}</text>
+    </view>
+  </view>
+</view>

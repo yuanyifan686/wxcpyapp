@@ -1,0 +1,12 @@
+<view class="ball-wrap" bindtap="onTap">
+  <view class="particles">
+    <view wx:for="{{particles}}" wx:key="id" class="particle" style="left:{{item.x}}%;top:{{item.y}}%;animation-delay:{{item.delay}}s;"></view>
+  </view>
+  <view class="ball {{animating ? 'animating' : ''}} {{exploding ? 'exploding' : ''}}">
+    <view class="ball-inner">
+      <view class="ball-glow"></view>
+      <text class="ball-text">{{hint}}</text>
+    </view>
+  </view>
+  <view wx:if="{{exploding}}" class="explosion-ring"></view>
+</view>

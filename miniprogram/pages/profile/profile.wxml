@@ -1,0 +1,43 @@
+<view class="profile-page container">
+  <view class="user-card glass-card fade-in">
+    <button class="avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+      <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatar}}" mode="aspectFill" />
+    </button>
+    <input type="nickname" class="nickname-input" placeholder="输入昵称" value="{{userInfo.nickname}}" bind:change="onNicknameChange" />
+  </view>
+
+  <view class="stats-grid">
+    <view class="stat-item glass-card">
+      <text class="stat-num">{{profile.totalDraws || 0}}</text>
+      <text class="stat-label">累计抽签</text>
+    </view>
+    <view class="stat-item glass-card">
+      <text class="stat-num gradient-text">{{profile.maxScore || 0}}</text>
+      <text class="stat-label">最高幸运值</text>
+    </view>
+    <view class="stat-item glass-card">
+      <text class="stat-num">{{profile.avgScore || 0}}</text>
+      <text class="stat-label">平均幸运值</text>
+    </view>
+    <view class="stat-item glass-card">
+      <text class="stat-num">{{profile.ssrCount || 0}}</text>
+      <text class="stat-label">SSR 次数</text>
+    </view>
+  </view>
+
+  <view class="checkin-card glass-card fade-in">
+    <view class="checkin-row">
+      <text class="section-title">连续签到</text>
+      <text class="checkin-days">{{profile.checkInStreak || 0}} 天</text>
+    </view>
+    <text class="checkin-points">积分：{{profile.points || 0}}</text>
+    <glass-button text="今日签到" bind:tap="onCheckIn" />
+  </view>
+
+  <view class="badges-section glass-card fade-in" wx:if="{{profile.badges.length}}">
+    <text class="section-title">获得徽章</text>
+    <view class="badge-list">
+      <text wx:for="{{profile.badges}}" wx:key="*this" class="badge-tag">🏅 {{item}}</text>
+    </view>
+  </view>
+</view>

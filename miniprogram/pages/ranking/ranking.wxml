@@ -1,0 +1,71 @@
+<view class="ranking-page container">
+  <text class="page-title gradient-text">今日欧皇榜</text>
+  <text class="page-sub">按今日幸运值排序 · TOP100</text>
+
+  <view wx:if="{{!loading && list.length}}" class="stats-bar glass-card fade-in">
+    <view class="stat-cell">
+      <text class="stat-val">{{list.length}}</text>
+      <text class="stat-key">今日参战</text>
+    </view>
+    <view class="stat-cell">
+      <text class="stat-val gradient-text">{{topScore}}%</text>
+      <text class="stat-key">最高幸运值</text>
+    </view>
+    <view class="stat-cell">
+      <text class="stat-val">{{myRank > 0 ? myRank : '-'}}</text>
+      <text class="stat-key">我的排名</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">加载中...</view>
+  <view wx:elif="{{!list.length}}" class="empty-card glass-card">
+    <text class="empty-icon">👑</text>
+    <text class="empty-title">今日欧皇榜虚位以待</text>
+    <text class="empty-desc">完成正式抽签即可上榜</text>
+    <glass-button text="去抽签" bind:tap="goHome" />
+  </view>
+
+  <block wx:else>
+    <view wx:if="{{podium.length}}" class="podium-section">
+      <view
+        wx:for="{{podium}}"
+        wx:key="rank"
+        class="podium-item {{item.podiumClass}} {{item.isMe ? 'is-me' : ''}}"
+      >
+        <view class="podium-crown" wx:if="{{item.rank === 1}}">👑</view>
+        <view class="level-tag" style="color:{{item.levelColor}};border-color:{{item.levelColor}};">{{item.level}}</view>
+        <image class="podium-avatar" src="{{item.avatar_url || defaultAvatar}}" mode="aspectFill" />
+        <text class="podium-rank">NO.{{item.rank}}</text>
+        <text class="podium-name">{{item.nickname}}{{item.isMe ? ' (我)' : ''}}</text>
+        <text class="podium-score">{{item.score}}%</text>
+        <text class="podium-ssr">累计 SSR ×{{item.ssrCount}}</text>
+        <view class="podium-bar"></view>
+      </view>
+    </view>
+
+    <view wx:if="{{restList.length}}" class="rank-list">
+      <view
+        wx:for="{{restList}}"
+        wx:key="rank"
+        class="rank-item glass-card fade-in {{item.isMe ? 'is-me' : ''}}"
+      >
+        <text class="rank-no">{{item.rank}}</text>
+        <image class="rank-avatar" src="{{item.avatar_url || defaultAvatar}}" mode="aspectFill" />
+        <view class="rank-info">
+          <view class="name-row">
+            <text class="rank-name">{{item.nickname}}</text>
+            <text wx:if="{{item.isMe}}" class="me-tag">我</text>
+          </view>
+          <text class="rank-meta">{{item.title}}</text>
+        </view>
+        <view class="rank-right">
+          <text class="level-pill" style="color:{{item.levelColor}};">{{item.level}}</text>
+          <text class="rank-score">{{item.score}}%</text>
+          <text class="rank-ssr">SSR ×{{item.ssrCount}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{list.length <= 3}}" class="rank-tip">榜单随今日正式签实时更新</view>
+  </block>
+</view>

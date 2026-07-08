@@ -1,0 +1,239 @@
+.ranking-page { min-height: 100vh; }
+
+.page-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  display: block;
+}
+
+.page-sub {
+  font-size: 24rpx;
+  color: #94A3B8;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.stats-bar {
+  display: flex;
+  padding: 24rpx 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.stat-cell {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-val {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.stat-key {
+  display: block;
+  font-size: 20rpx;
+  color: #94A3B8;
+  margin-top: 6rpx;
+}
+
+.empty {
+  text-align: center;
+  padding: 80rpx;
+  color: #94A3B8;
+}
+
+.empty-card {
+  text-align: center;
+  padding: 64rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.empty-icon { font-size: 64rpx; }
+.empty-title { font-size: 32rpx; font-weight: 600; color: #F8FAFC; }
+.empty-desc { font-size: 24rpx; color: #94A3B8; margin-bottom: 16rpx; }
+
+.rank-tip {
+  text-align: center;
+  font-size: 22rpx;
+  color: #64748B;
+  margin-top: 24rpx;
+}
+
+/* 领奖台：左2 中1 右3 */
+.podium-section {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16rpx;
+  margin-bottom: 40rpx;
+  padding: 0 8rpx;
+}
+
+.podium-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  max-width: 220rpx;
+}
+
+.podium-item.first { order: 2; }
+.podium-item.second { order: 1; }
+.podium-item.third { order: 3; }
+.podium-item.solo { order: 0; max-width: 280rpx; margin: 0 auto; }
+.podium-item.is-me .podium-name { color: #22D3EE; }
+
+.level-tag {
+  font-size: 20rpx;
+  font-weight: 700;
+  padding: 4rpx 12rpx;
+  border: 1rpx solid;
+  border-radius: 16rpx;
+  margin-bottom: 8rpx;
+}
+
+.podium-crown {
+  font-size: 36rpx;
+  margin-bottom: 8rpx;
+  animation: float 2s ease-in-out infinite;
+}
+
+.podium-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 12rpx;
+}
+
+.podium-item.first .podium-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-color: #FFD700;
+  box-shadow: 0 0 30rpx rgba(255, 215, 0, 0.4);
+}
+
+.podium-item.second .podium-avatar {
+  border-color: #C0C0C0;
+  box-shadow: 0 0 20rpx rgba(192, 192, 192, 0.3);
+}
+
+.podium-item.third .podium-avatar {
+  border-color: #CD7F32;
+  box-shadow: 0 0 20rpx rgba(205, 127, 50, 0.3);
+}
+
+.podium-rank {
+  font-size: 20rpx;
+  color: #94A3B8;
+  margin-bottom: 4rpx;
+}
+
+.podium-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #F8FAFC;
+  max-width: 180rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.podium-score {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #22D3EE;
+  margin-top: 4rpx;
+}
+
+.podium-ssr {
+  font-size: 20rpx;
+  color: #A855F7;
+  margin-top: 4rpx;
+}
+
+.podium-bar {
+  width: 100%;
+  margin-top: 16rpx;
+  border-radius: 12rpx 12rpx 0 0;
+  background: linear-gradient(180deg, rgba(108, 99, 255, 0.35), rgba(108, 99, 255, 0.1));
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.podium-item.first .podium-bar { height: 120rpx; }
+.podium-item.second .podium-bar { height: 88rpx; }
+.podium-item.third .podium-bar { height: 64rpx; }
+
+/* 列表 */
+.rank-list { display: flex; flex-direction: column; gap: 16rpx; }
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  gap: 16rpx;
+}
+
+.rank-item.is-me {
+  border: 1rpx solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.06);
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.me-tag {
+  font-size: 18rpx;
+  color: #22D3EE;
+  background: rgba(34, 211, 238, 0.15);
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+}
+
+.level-pill {
+  font-size: 20rpx;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.rank-no {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #64748B;
+  min-width: 40rpx;
+  text-align: center;
+}
+
+.rank-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.rank-info { flex: 1; min-width: 0; }
+.rank-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-meta { font-size: 22rpx; color: #94A3B8; display: block; margin-top: 4rpx; }
+
+.rank-right { text-align: right; flex-shrink: 0; }
+.rank-score { font-size: 32rpx; font-weight: 700; color: #22D3EE; display: block; }
+.rank-ssr { font-size: 20rpx; color: #A855F7; display: block; margin-top: 2rpx; }

@@ -1,0 +1,56 @@
+<view class="result-wrap" wx:if="{{fortune}}">
+  <!-- SSR 全屏闪光 -->
+  <view wx:if="{{ssrFlash}}" class="ssr-flash"></view>
+  <view wx:if="{{ssrFlash}}" class="ssr-particles">
+    <view wx:for="{{particles}}" wx:key="id" class="ssr-particle" style="left:{{item.x}}%;top:{{item.y}}%;animation-delay:{{item.delay}}s;"></view>
+  </view>
+
+  <scroll-view scroll-y class="result-page">
+    <view class="score-section {{reveal >= 1 ? 'stagger-show' : 'stagger-hide'}}">
+      <text class="score-label">今日幸运指数</text>
+      <view class="stars-row">
+        <text wx:for="{{starCount}}" wx:key="*this" class="star-icon star-pop" style="animation-delay:{{index * 0.08}}s;">★</text>
+        <text wx:for="{{5 - starCount}}" wx:key="*this" class="star-icon dim">★</text>
+      </view>
+      <view class="score-num-wrap">
+        <text class="score-num gradient-text score-shimmer">{{displayScore}}%</text>
+      </view>
+      <text class="score-level level-badge" style="color:{{levelColor}};border-color:{{levelColor}};">{{fortune.level}}</text>
+    </view>
+
+    <view class="{{reveal >= 2 ? 'stagger-show' : 'stagger-hide'}}">
+      <fortune-card fortune="{{fortune}}" />
+    </view>
+
+    <view class="{{reveal >= 3 ? 'stagger-show' : 'stagger-hide'}}">
+      <energy-bar value="{{fortune.fishIndex}}" />
+    </view>
+
+    <view class="{{reveal >= 4 ? 'stagger-show' : 'stagger-hide'}}">
+      <buff-grid buff="{{fortune.buff}}" />
+    </view>
+
+    <view class="avoid-card glass-card {{reveal >= 5 ? 'stagger-show' : 'stagger-hide'}}">
+      <text class="section-title">今日避雷</text>
+      <view class="avoid-list">
+        <text wx:for="{{fortune.avoid}}" wx:key="*this" class="avoid-item">✗ {{item}}</text>
+      </view>
+    </view>
+
+    <view class="quote-card glass-card {{reveal >= 6 ? 'stagger-show' : 'stagger-hide'}}">
+      <text class="section-title">AI 毒鸡汤</text>
+      <text class="quote-text">"{{fortune.oneLine}}"</text>
+    </view>
+
+    <view class="{{reveal >= 7 ? 'stagger-show' : 'stagger-hide'}}">
+      <badge title="{{fortune.title}}" level="{{fortune.level}}" />
+    </view>
+
+    <view class="btn-row {{reveal >= 8 ? 'stagger-show' : 'stagger-hide'}}">
+      <glass-button text="生成分享海报" bind:tap="onSharePoster" />
+      <glass-button text="返回首页" type="ghost" bind:tap="goHome" />
+    </view>
+
+    <share-poster id="poster" fortune="{{fortune}}" nickname="{{nickname}}" />
+  </scroll-view>
+</view>

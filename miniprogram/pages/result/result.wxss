@@ -1,0 +1,151 @@
+.result-wrap {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.result-page {
+  height: 100vh;
+  padding: 32rpx;
+  padding-bottom: 60rpx;
+  box-sizing: border-box;
+}
+
+/* 阶梯入场 */
+.stagger-hide {
+  opacity: 0;
+  transform: translateY(40rpx) scale(0.96);
+}
+
+.stagger-show {
+  animation: staggerIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(40rpx) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* SSR 闪光 */
+.ssr-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.45) 0%, transparent 70%);
+  z-index: 100;
+  pointer-events: none;
+  animation: ssrFlash 1s ease forwards;
+}
+
+@keyframes ssrFlash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.ssr-particles {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  pointer-events: none;
+}
+
+.ssr-particle {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  background: #FFD700;
+  border-radius: 50%;
+  animation: ssrParticle 1s ease forwards;
+}
+
+@keyframes ssrParticle {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(3) translateY(-80rpx); }
+}
+
+.score-section {
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.score-label {
+  font-size: 26rpx;
+  color: #94A3B8;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.stars-row { margin-bottom: 16rpx; }
+
+.star-icon {
+  font-size: 36rpx;
+  color: #FFD700;
+  display: inline-block;
+}
+
+.star-icon.star-pop {
+  animation: starPop 0.4s ease backwards;
+}
+
+@keyframes starPop {
+  from { transform: scale(0) rotate(-180deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.star-icon.dim { color: #334155; }
+
+.score-num-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 8rpx 0;
+}
+
+.score-num {
+  font-size: 96rpx;
+  font-weight: 800;
+  display: block;
+  line-height: 1.1;
+}
+
+.score-shimmer {
+  background-size: 200% auto;
+  animation: scoreShimmer 2.5s linear infinite;
+}
+
+@keyframes scoreShimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+.level-badge {
+  display: inline-block;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-top: 12rpx;
+  padding: 8rpx 28rpx;
+  border: 2rpx solid;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.avoid-card, .quote-card {
+  padding: 28rpx;
+  margin: 24rpx 0;
+}
+
+.avoid-list { display: flex; flex-direction: column; gap: 12rpx; }
+.avoid-item { font-size: 28rpx; color: #F87171; }
+
+.quote-text {
+  font-size: 30rpx;
+  color: #CBD5E1;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}

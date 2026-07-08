@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "今日运势",
+  "usingComponents": {
+    "fortune-card": "/components/fortune-card/fortune-card",
+    "energy-bar": "/components/energy-bar/energy-bar",
+    "buff-grid": "/components/buff-grid/buff-grid",
+    "badge": "/components/badge/badge",
+    "glass-button": "/components/glass-button/glass-button",
+    "share-poster": "/components/share-poster/share-poster"
+  }
+}

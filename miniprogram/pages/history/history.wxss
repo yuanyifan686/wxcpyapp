@@ -1,0 +1,40 @@
+.history-page { min-height: 100vh; }
+
+.page-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 32rpx;
+}
+
+.empty {
+  text-align: center;
+  padding: 80rpx 32rpx;
+  color: #94A3B8;
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+  align-items: center;
+}
+
+.timeline { display: flex; flex-direction: column; gap: 20rpx; }
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+  gap: 20rpx;
+}
+
+.item-date {
+  font-size: 22rpx;
+  color: #22D3EE;
+  writing-mode: vertical-lr;
+  min-width: 48rpx;
+}
+
+.item-body { flex: 1; }
+.item-score { font-size: 40rpx; font-weight: 700; display: block; }
+.item-level { font-size: 24rpx; color: #A855F7; display: block; margin: 4rpx 0; }
+.item-summary { font-size: 24rpx; color: #94A3B8; display: block; }
+.item-arrow { font-size: 40rpx; color: #475569; }

@@ -1,0 +1,19 @@
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2rpx solid rgba(255, 215, 0, 0.4);
+  border-radius: 24rpx;
+  text-align: center;
+}
+
+.badge.glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+  box-shadow: 0 0 40rpx rgba(255, 215, 0, 0.3);
+}
+
+.badge-icon { font-size: 48rpx; margin-bottom: 12rpx; }
+.badge-title { font-size: 32rpx; font-weight: 700; color: #FFD700; }
+.badge-level { font-size: 24rpx; color: #94A3B8; margin-top: 8rpx; }

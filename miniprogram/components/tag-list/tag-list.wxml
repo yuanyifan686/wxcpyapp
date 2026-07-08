@@ -1,0 +1,3 @@
+<view class="tag-list">
+  <view wx:for="{{tags}}" wx:key="*this" class="tag">{{item}}</view>
+</view>

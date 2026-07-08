@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "今日赛博运势",
+  "usingComponents": {
+    "loading-ball": "/components/loading-ball/loading-ball",
+    "glass-button": "/components/glass-button/glass-button"
+  }
+}

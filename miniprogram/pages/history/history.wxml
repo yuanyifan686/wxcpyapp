@@ -1,0 +1,27 @@
+<view class="history-page container">
+  <text class="page-title gradient-text">近 30 天运势</text>
+
+  <view wx:if="{{loading}}" class="empty">加载中...</view>
+  <view wx:elif="{{!list.length}}" class="empty glass-card">
+    <text>暂无历史记录</text>
+    <glass-button text="去抽签" bind:tap="goHome" />
+  </view>
+
+  <view wx:else class="timeline">
+    <view
+      wx:for="{{list}}"
+      wx:key="fortune_date"
+      class="timeline-item glass-card fade-in"
+      data-index="{{index}}"
+      bindtap="onItemTap"
+    >
+      <view class="item-date">{{item.displayDate}}</view>
+      <view class="item-body">
+        <text class="item-score" style="color:{{item.color}};">{{item.score}}%</text>
+        <text class="item-level">{{item.level}} · {{item.title}}</text>
+        <text class="item-summary">{{item.summary}}</text>
+      </view>
+      <text class="item-arrow">›</text>
+    </view>
+  </view>
+</view>

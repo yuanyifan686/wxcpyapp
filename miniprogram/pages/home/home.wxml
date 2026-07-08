@@ -1,0 +1,30 @@
+<view class="home-page">
+  <view class="bg-gradient"></view>
+  <view class="stars">
+    <view wx:for="{{stars}}" wx:key="id" class="star" style="left:{{item.x}}%;top:{{item.y}}%;animation-delay:{{item.delay}}s;"></view>
+  </view>
+
+  <view class="header fade-in">
+    <text class="logo">⚡ CYBER</text>
+    <text class="title gradient-text">今日赛博运势</text>
+    <text class="slogan">宇宙服务器今日已同步你的幸运值</text>
+  </view>
+
+  <view class="ball-section">
+    <loading-ball
+      hint="{{hasOfficialToday ? '✨ 点击查看今日运势' : '✨ 点击获取今日运势'}}"
+      animating="{{animating}}"
+      exploding="{{exploding}}"
+      bind:tap="onBallTap"
+    />
+  </view>
+
+  <view class="actions fade-in">
+    <glass-button wx:if="{{hasOfficialToday}}" text="查看今日结果" bind:tap="goResult" />
+    <glass-button wx:if="{{hasOfficialToday}}" text="娱乐重抽" type="ghost" bind:tap="onRegenerate" />
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-mask">
+    <text class="loading-text">宇宙 WiFi 连接中...</text>
+  </view>
+</view>

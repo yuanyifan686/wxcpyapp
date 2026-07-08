@@ -1,0 +1,5 @@
+<view class="badge {{glow ? 'glow' : ''}}" style="border-color:{{color}};">
+  <text class="badge-icon">🏅</text>
+  <text class="badge-title">{{title}}</text>
+  <text class="badge-level">{{level}}</text>
+</view>

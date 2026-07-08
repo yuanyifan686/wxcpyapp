@@ -1,0 +1,100 @@
+.profile-page { min-height: 100vh; }
+
+.user-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.avatar-btn {
+  background: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.avatar-btn::after { border: none; }
+
+.avatar {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(108, 99, 255, 0.5);
+}
+
+.nickname-input {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #F8FAFC;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.stat-item {
+  padding: 28rpx;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 44rpx;
+  font-weight: 700;
+  display: block;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #94A3B8;
+  display: block;
+  margin-top: 8rpx;
+}
+
+.checkin-card {
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.checkin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.checkin-days {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #22D3EE;
+}
+
+.checkin-points {
+  font-size: 24rpx;
+  color: #94A3B8;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.badges-section { padding: 28rpx; }
+
+.badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.badge-tag {
+  padding: 10rpx 20rpx;
+  background: rgba(255, 215, 0, 0.15);
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  color: #FFD700;
+}

@@ -1,0 +1,98 @@
+.home-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 32rpx 160rpx;
+}
+
+.bg-gradient {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0a0a12 0%, #1a1040 40%, #0a2030 70%, #0a0a12 100%);
+  background-size: 400% 400%;
+  animation: shimmer 12s ease infinite;
+  z-index: 0;
+}
+
+.stars {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  width: 4rpx;
+  height: 4rpx;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: float 4s ease-in-out infinite;
+}
+
+.header {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.logo {
+  font-size: 24rpx;
+  color: #22D3EE;
+  letter-spacing: 4rpx;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.title {
+  font-size: 52rpx;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.slogan {
+  font-size: 26rpx;
+  color: #94A3B8;
+  display: block;
+}
+
+.ball-section {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  width: 100%;
+  max-width: 400rpx;
+}
+
+.loading-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 18, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.loading-text {
+  color: #22D3EE;
+  font-size: 28rpx;
+  animation: breathe 1.5s ease infinite;
+}

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "历史记录",
+  "usingComponents": {
+    "glass-button": "/components/glass-button/glass-button"
+  }
+}

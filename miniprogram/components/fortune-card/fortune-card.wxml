@@ -1,0 +1,10 @@
+<view class="fortune-card glass-card fade-in">
+  <view class="card-header">
+    <text class="card-label">今日总结</text>
+  </view>
+  <text class="card-summary">{{fortune.summary}}</text>
+  <text class="card-fortune">{{fortune.fortune}}</text>
+  <view class="card-keywords">
+    <tag-list tags="{{fortune.keywords}}" />
+  </view>
+</view>

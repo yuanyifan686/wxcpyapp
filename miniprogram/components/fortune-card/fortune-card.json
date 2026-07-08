@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "tag-list": "/components/tag-list/tag-list"
+  }
+}

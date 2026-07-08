@@ -1,0 +1,186 @@
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 110rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  background: rgba(10, 10, 18, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -4rpx 24rpx rgba(108, 99, 255, 0.08);
+  z-index: 999;
+}
+
+.tab-bar-glow {
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(108, 99, 255, 0.6), rgba(34, 211, 238, 0.4), transparent);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tab-item.active {
+  transform: translateY(-4rpx);
+}
+
+.icon-wrap {
+  position: relative;
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-glow {
+  position: absolute;
+  inset: -8rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(108, 99, 255, 0.35), transparent 70%);
+}
+
+.tab-icon {
+  position: relative;
+  z-index: 1;
+  transition: all 0.25s ease;
+}
+
+.tab-item.active .tab-icon {
+  filter: drop-shadow(0 0 8rpx rgba(108, 99, 255, 0.8));
+}
+
+/* 线性图标 - 水晶球 */
+.icon-fortune {
+  width: 28rpx;
+  height: 28rpx;
+  border: 3rpx solid #94A3B8;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.tab-item.active .icon-fortune {
+  border-color: #6C63FF;
+  background: rgba(108, 99, 255, 0.2);
+}
+
+.icon-fortune::after {
+  content: '';
+  display: block;
+  width: 8rpx;
+  height: 8rpx;
+  background: #94A3B8;
+  border-radius: 50%;
+  margin: 6rpx auto 0;
+}
+
+.tab-item.active .icon-fortune::after {
+  background: #22D3EE;
+}
+
+/* 历史 - 列表线 */
+.icon-history {
+  width: 28rpx;
+  height: 22rpx;
+  border: 3rpx solid #94A3B8;
+  border-radius: 4rpx;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.tab-item.active .icon-history { border-color: #6C63FF; }
+
+.icon-history::before,
+.icon-history::after {
+  content: '';
+  position: absolute;
+  left: 4rpx;
+  right: 4rpx;
+  height: 2rpx;
+  background: #94A3B8;
+}
+
+.icon-history::before { top: 5rpx; }
+.icon-history::after { top: 12rpx; }
+
+.tab-item.active .icon-history::before,
+.tab-item.active .icon-history::after { background: #6C63FF; }
+
+/* 欧皇榜 - 皇冠 */
+.icon-rank {
+  width: 0;
+  height: 0;
+  border-left: 14rpx solid transparent;
+  border-right: 14rpx solid transparent;
+  border-bottom: 12rpx solid #94A3B8;
+  position: relative;
+  top: -4rpx;
+}
+
+.tab-item.active .icon-rank { border-bottom-color: #FFD700; }
+
+.icon-rank::after {
+  content: '';
+  position: absolute;
+  width: 28rpx;
+  height: 8rpx;
+  background: #94A3B8;
+  bottom: -18rpx;
+  left: -14rpx;
+  border-radius: 2rpx;
+}
+
+.tab-item.active .icon-rank::after { background: #FFD700; }
+
+/* 我的 - 人像 */
+.icon-profile {
+  width: 20rpx;
+  height: 20rpx;
+  border: 3rpx solid #94A3B8;
+  border-radius: 50%;
+  box-sizing: border-box;
+  position: relative;
+  top: -6rpx;
+}
+
+.tab-item.active .icon-profile { border-color: #6C63FF; }
+
+.icon-profile::after {
+  content: '';
+  position: absolute;
+  width: 32rpx;
+  height: 16rpx;
+  border: 3rpx solid #94A3B8;
+  border-bottom: none;
+  border-radius: 16rpx 16rpx 0 0;
+  bottom: -22rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+
+.tab-item.active .icon-profile::after { border-color: #6C63FF; }
+
+.tab-text {
+  font-size: 20rpx;
+  color: #64748B;
+  transition: color 0.25s ease;
+}
+
+.tab-item.active .tab-text {
+  color: #6C63FF;
+  font-weight: 600;
+}

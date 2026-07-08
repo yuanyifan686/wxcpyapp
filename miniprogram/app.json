@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/result/result",
+    "pages/history/history",
+    "pages/ranking/ranking",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "今日赛博运势",
+    "navigationBarBackgroundColor": "#0a0a12",
+    "backgroundColor": "#0a0a12",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#94A3B8",
+    "selectedColor": "#6C63FF",
+    "backgroundColor": "#0a0a12",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/home", "text": "运势" },
+      { "pagePath": "pages/history/history", "text": "历史" },
+      { "pagePath": "pages/ranking/ranking", "text": "欧皇榜" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

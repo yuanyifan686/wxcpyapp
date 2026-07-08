@@ -1,0 +1,3 @@
+<button class="glass-btn {{type}} {{disabled ? 'disabled' : ''}}" disabled="{{disabled}}" bindtap="onTap">
+  <text class="btn-text">{{text}}</text>
+</button>

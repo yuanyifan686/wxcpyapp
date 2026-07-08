@@ -1,0 +1,16 @@
+<view class="tab-bar">
+  <view class="tab-bar-glow"></view>
+  <view
+    wx:for="{{list}}"
+    wx:key="index"
+    class="tab-item {{selected === index ? 'active' : ''}}"
+    data-index="{{index}}"
+    bindtap="onSwitch"
+  >
+    <view class="icon-wrap">
+      <view class="tab-icon icon-{{item.iconType}}"></view>
+      <view wx:if="{{selected === index}}" class="icon-glow"></view>
+    </view>
+    <text class="tab-text">{{item.text}}</text>
+  </view>
+</view>

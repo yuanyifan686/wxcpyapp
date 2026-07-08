@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "今日欧皇榜",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "glass-button": "/components/glass-button/glass-button"
+  }
+}

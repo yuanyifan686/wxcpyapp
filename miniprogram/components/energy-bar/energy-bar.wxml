@@ -1,0 +1,9 @@
+<view class="energy-bar glass-card">
+  <view class="energy-header">
+    <text class="energy-label">Cyber Energy</text>
+    <text class="energy-value">{{displayValue}}%</text>
+  </view>
+  <view class="energy-track">
+    <view class="energy-fill" style="width: {{displayValue}}%;"></view>
+  </view>
+</view>
