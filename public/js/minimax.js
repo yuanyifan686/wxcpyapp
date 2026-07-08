@@ -1,9 +1,5 @@
-/**
- * Minimax AI 运势生成服务
- */
-const config = require('../config/index.js')
-const proxy = require('../utils/proxy.js')
-const { today } = require('../utils/date.js')
+import { apiRequest } from './api.js'
+import { today } from './date.js'
 
 const SYSTEM_PROMPT = [
   '你是《今日赛博运势》AI，为年轻人生成赛博朋克风格的娱乐运势。',
@@ -19,48 +15,9 @@ const SYSTEM_PROMPT = [
 ].join('')
 
 const RETRY_COUNT = 2
-const TIMEOUT_MS = 30000
 
 function buildUserPrompt() {
-  const date = today()
-  return '请为 ' + date + ' 生成一份全新的赛博打工人今日运势 JSON。level 按概率：SSR 10%, SR 25%, R 40%, N 25%。内容要有创意和梗。'
-}
-
-function requestMinimax(messages) {
-  if (proxy.useProxy()) {
-    return proxy.proxyRequest('/minimax', 'POST', {
-      model: config.minimax.model,
-      messages,
-      temperature: 0.95,
-      max_tokens: 1024,
-    })
-  }
-
-  return new Promise((resolve, reject) => {
-    wx.request({
-      url: config.minimax.baseUrl + '/text/chatcompletion_v2',
-      method: 'POST',
-      timeout: TIMEOUT_MS,
-      header: {
-        Authorization: 'Bearer ' + config.minimax.apiKey,
-        'Content-Type': 'application/json',
-      },
-      data: {
-        model: config.minimax.model,
-        messages,
-        temperature: 0.95,
-        max_tokens: 1024,
-      },
-      success(res) {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data)
-        } else {
-          reject(new Error('Minimax HTTP ' + res.statusCode))
-        }
-      },
-      fail: reject,
-    })
-  })
+  return '请为 ' + today() + ' 生成一份全新的赛博打工人今日运势 JSON。level 按概率：SSR 10%, SR 25%, R 40%, N 25%。内容要有创意和梗。'
 }
 
 function extractContent(response) {
@@ -82,8 +39,7 @@ function parseFortuneJson(text) {
   const start = raw.indexOf('{')
   const end = raw.lastIndexOf('}')
   if (start >= 0 && end > start) raw = raw.slice(start, end + 1)
-  const data = JSON.parse(raw)
-  return normalizeFortune(data)
+  return normalizeFortune(JSON.parse(raw))
 }
 
 function clampScore(n, fallback) {
@@ -92,7 +48,7 @@ function clampScore(n, fallback) {
   return Math.max(0, Math.min(100, Math.round(v)))
 }
 
-function normalizeFortune(data) {
+export function normalizeFortune(data) {
   const buff = data.buff || {}
   const level = data.level || 'R'
   return {
@@ -129,8 +85,7 @@ function mockFortune() {
   const level = levels[Math.floor(Math.random() * levels.length)]
   const score = level === 'SSR' ? 88 + Math.floor(Math.random() * 12) : 55 + Math.floor(Math.random() * 35)
   return normalizeFortune({
-    level,
-    score,
+    level, score,
     fishIndex: 60 + Math.floor(Math.random() * 35),
     bossRisk: 30 + Math.floor(Math.random() * 50),
     summary: '今天非常适合开启新的挑战，主动出击将获得不错反馈。',
@@ -147,31 +102,34 @@ function mockFortune() {
   })
 }
 
-function generateFortune(useMock) {
-  if (useMock) {
-    return Promise.resolve(mockFortune())
-  }
+async function requestMinimax(messages) {
+  return apiRequest('/minimax', 'POST', {
+    model: 'Minimax-M3',
+    messages,
+    temperature: 0.95,
+    max_tokens: 1024,
+  })
+}
+
+export async function generateFortune(useMock = false) {
+  if (useMock) return mockFortune()
+
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: buildUserPrompt() },
   ]
 
-  function attempt(left) {
-    return requestMinimax(messages)
-      .then(extractContent)
-      .then(parseFortuneJson)
-      .catch((err) => {
-        if (left > 0) return attempt(left - 1)
+  for (let left = RETRY_COUNT; left >= 0; left--) {
+    try {
+      const response = await requestMinimax(messages)
+      const content = extractContent(response)
+      return parseFortuneJson(content)
+    } catch (err) {
+      if (left === 0) {
         console.warn('Minimax 失败，使用本地 mock', err)
         return mockFortune()
-      })
+      }
+    }
   }
-
-  return attempt(RETRY_COUNT)
-}
-
-module.exports = {
-  generateFortune,
-  mockFortune,
-  normalizeFortune,
+  return mockFortune()
 }

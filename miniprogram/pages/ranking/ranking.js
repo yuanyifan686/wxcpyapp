@@ -32,15 +32,47 @@ function enrichItem(item, myId) {
   }
 }
 
+function formatUpdatedAt(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return h + ':' + m + ' 更新'
+}
+
+function applyRankingList(page, items, myId) {
+  const list = (items || []).map((item, index) =>
+    enrichItem({ ...item, rank: index + 1 }, myId)
+  )
+  const myRankItem = list.find((item) => item.isMe)
+  const top3 = list.slice(0, 3)
+  const podium = buildPodium(top3)
+  const restList = list.length > 3 ? list.slice(3) : []
+  const showMyBar = !!(myRankItem && myRankItem.rank > 8)
+
+  page.setData({
+    list,
+    podium,
+    restList,
+    myRankItem: showMyBar ? myRankItem : null,
+    topScore: list.length ? list[0].score : 0,
+    myRank: myRankItem ? myRankItem.rank : 0,
+    loading: false,
+    updatedAtText: formatUpdatedAt(Date.now()),
+  })
+}
+
 Page({
   data: {
     list: [],
     podium: [],
     restList: [],
+    myRankItem: null,
     loading: true,
     defaultAvatar: DEFAULT_AVATAR,
     topScore: 0,
     myRank: 0,
+    updatedAtText: '',
   },
 
   onShow() {
@@ -50,25 +82,16 @@ Page({
     this.loadRanking()
   },
 
-  loadRanking() {
+  loadRanking(force) {
     const myId = getApp().globalData.userId
-    this.setData({ loading: true })
-    fortuneService.getRanking().then((items) => {
-      const list = (items || []).map((item, index) =>
-        enrichItem({ ...item, rank: index + 1 }, myId)
-      )
-      const myRankItem = list.find((item) => item.isMe)
-      const top3 = list.slice(0, 3)
-      const podium = buildPodium(top3)
-      const restList = list.length > 3 ? list.slice(3) : []
-      this.setData({
-        list,
-        podium,
-        restList,
-        topScore: list.length ? list[0].score : 0,
-        myRank: myRankItem ? myRankItem.rank : 0,
-        loading: false,
-      })
+    if (!this.data.list.length || force) {
+      this.setData({ loading: true })
+    }
+
+    return fortuneService.getRanking({ force: !!force }).then((items) => {
+      applyRankingList(this, items, myId)
+    }).catch(() => {
+      this.setData({ loading: false })
     })
   },
 
@@ -77,7 +100,9 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.loadRanking()
-    wx.stopPullDownRefresh()
+    fortuneService.invalidateRankingCache()
+    this.loadRanking(true).finally(() => {
+      wx.stopPullDownRefresh()
+    })
   },
 })

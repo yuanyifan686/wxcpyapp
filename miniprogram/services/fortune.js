@@ -3,8 +3,12 @@
  */
 const minimax = require('./Minimax.js')
 const coze = require('./coze.js')
+const proxy = require('../utils/proxy.js')
 const storage = require('../utils/storage.js')
 const { today, nowTimestamp } = require('../utils/date.js')
+
+const RANKING_CACHE_TTL = 45000
+let rankingCache = { date: '', items: null, updatedAt: 0 }
 
 function buildRecord(fortune, userId, userInfo, isOfficial) {
   const date = today()
@@ -167,6 +171,7 @@ function generateAndSave(isEntertainment) {
           if (isOfficial) {
             storage.cacheTodayFortune(parsed)
             storage.appendFortuneHistory(parsed)
+            invalidateRankingCache()
           }
           app.setCurrentFortune(parsed)
           return parsed
@@ -176,6 +181,7 @@ function generateAndSave(isEntertainment) {
           if (isOfficial) {
             storage.cacheTodayFortune(parsed)
             storage.appendFortuneHistory(parsed)
+            invalidateRankingCache()
           }
           app.setCurrentFortune(parsed)
           return parsed
@@ -202,8 +208,11 @@ function getHistory(userId) {
     })
 }
 
-function getUsersSsrMap() {
-  return coze.queryRecords('users', { pageSize: 1000 })
+function getUsersSsrMapForOpenids(openids) {
+  const ids = (openids || []).filter(Boolean)
+  if (!ids.length) return Promise.resolve({})
+
+  return coze.queryUsersByOpenids(ids)
     .then((data) => {
       const map = {}
       ;((data && data.items) || []).forEach((u) => {
@@ -255,24 +264,60 @@ function mergeRankingList(cloudList, localList, ssrMap) {
       const record = map[k]
       return {
         ...record,
-        ssrCount: (ssrMap && ssrMap[record.openid]) || (record.level === 'SSR' ? 1 : 0),
+        ssrCount: (ssrMap && ssrMap[record.openid])
+          ?? record.ssrCount
+          ?? (record.level === 'SSR' ? 1 : 0),
       }
     })
     .sort((a, b) => Number(b.score) - Number(a.score))
     .slice(0, 100)
 }
 
-function getRanking() {
+function fetchCloudRanking() {
+  const date = today()
+  if (proxy.useProxy()) {
+    return proxy.proxyRequest('/ranking?date=' + date, 'GET', null)
+      .then((data) => ((data && data.items) || []))
+  }
+
+  return coze.queryTodayRanking(100).then((rankData) => {
+    const cloudList = ((rankData && rankData.items) || []).map(parseRecord)
+    const openids = cloudList.map((item) => item.openid).filter(Boolean)
+    return getUsersSsrMapForOpenids(openids).then((ssrMap) =>
+      mergeRankingList(cloudList, [], ssrMap)
+    )
+  })
+}
+
+function getRanking(options) {
+  const force = options && options.force
+  const date = today()
   const localToday = getTodayLocalRankingRecords()
-  return Promise.all([coze.queryTodayRanking(100), getUsersSsrMap()])
-    .then(([rankData, ssrMap]) => {
-      const cloudList = ((rankData && rankData.items) || []).map(parseRecord)
-      return mergeRankingList(cloudList, localToday, ssrMap)
+  const now = Date.now()
+
+  if (
+    !force
+    && rankingCache.date === date
+    && rankingCache.items
+    && now - rankingCache.updatedAt < RANKING_CACHE_TTL
+  ) {
+    return Promise.resolve(mergeRankingList(rankingCache.items, localToday, {}))
+  }
+
+  return fetchCloudRanking()
+    .then((cloudItems) => {
+      const merged = mergeRankingList(cloudItems, localToday, {})
+      rankingCache = { date, items: cloudItems, updatedAt: Date.now() }
+      return merged
     })
     .catch((err) => {
-      console.warn('Coze 榜单查询失败，使用本地今日记录', err)
+      console.warn('榜单查询失败，使用本地今日记录', err)
       return mergeRankingList([], localToday, {})
     })
+}
+
+function invalidateRankingCache() {
+  rankingCache = { date: '', items: null, updatedAt: 0 }
 }
 
 function getUserProfile(userId) {
@@ -397,6 +442,7 @@ module.exports = {
   generateAndSave,
   getHistory,
   getRanking,
+  invalidateRankingCache,
   getUserProfile,
   doCheckIn,
   parseRecord,

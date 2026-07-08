@@ -2,6 +2,7 @@
  * Coze 数据库服务封装
  */
 const config = require('../config/index.js')
+const proxy = require('../utils/proxy.js')
 
 const CONNECTOR_ID = '1024'
 const DB_KEY_MAP = {
@@ -37,7 +38,21 @@ function stringifyRow(row) {
   return result
 }
 
+function proxyAction(action, data) {
+  return proxy.proxyRequest('/coze', 'POST', {
+    action,
+    dbKey: data._dbKey,
+    payload: data._payload,
+    row: data._row,
+    filter: data._filter,
+  })
+}
+
 function request(path, method, data) {
+  if (proxy.useProxy()) {
+    throw new Error('proxy 模式请使用 proxyAction')
+  }
+
   return new Promise((resolve, reject) => {
     wx.request({
       url: config.coze.baseUrl + path,
@@ -63,6 +78,9 @@ function request(path, method, data) {
 }
 
 function insertRecords(dbKey, rows) {
+  if (proxy.useProxy()) {
+    return proxyAction('insert', { _dbKey: dbKey, _payload: rows })
+  }
   const databaseId = getDatabaseId(dbKey)
   return request('/databases/' + databaseId + '/records', 'POST', {
     connector_id: CONNECTOR_ID,
@@ -72,6 +90,17 @@ function insertRecords(dbKey, rows) {
 }
 
 function queryRecords(dbKey, options) {
+  if (proxy.useProxy()) {
+    return proxyAction('query', {
+      _dbKey: dbKey,
+      _payload: {
+        pageNum: options.pageNum || 1,
+        pageSize: options.pageSize || 20,
+        filter: options.filter,
+        orderBy: options.orderBy,
+      },
+    })
+  }
   const databaseId = getDatabaseId(dbKey)
   const payload = {
     connector_id: CONNECTOR_ID,
@@ -96,6 +125,13 @@ function rowToUpdateFields(row) {
 }
 
 function updateRecords(dbKey, row, filter) {
+  if (proxy.useProxy()) {
+    return proxyAction('update', {
+      _dbKey: dbKey,
+      _row: row,
+      _filter: filter || equalFilter([{ field: 'openid', value: row.openid }]),
+    })
+  }
   const databaseId = getDatabaseId(dbKey)
   return request('/databases/' + databaseId + '/records', 'PUT', {
     connector_id: CONNECTOR_ID,
@@ -108,6 +144,17 @@ function updateRecords(dbKey, row, filter) {
 function equalFilter(conditions) {
   return {
     logic: 'and',
+    conditions: conditions.map((c) => ({
+      left: c.field,
+      operation: 'equal',
+      right: String(c.value),
+    })),
+  }
+}
+
+function orFilter(conditions) {
+  return {
+    logic: 'or',
     conditions: conditions.map((c) => ({
       left: c.field,
       operation: 'equal',
@@ -161,6 +208,16 @@ function queryUser(openid) {
   })
 }
 
+function queryUsersByOpenids(openids) {
+  if (!openids || !openids.length) {
+    return Promise.resolve({ items: [] })
+  }
+  return queryRecords(DB_KEY_MAP.users, {
+    filter: orFilter(openids.map((id) => ({ field: 'openid', value: id }))),
+    pageSize: openids.length,
+  })
+}
+
 function insertUser(user) {
   return insertRecords(DB_KEY_MAP.users, [user])
 }
@@ -178,6 +235,9 @@ module.exports = {
   queryFortuneHistory,
   queryTodayRanking,
   queryUser,
+  queryUsersByOpenids,
   insertUser,
   updateUser,
+  equalFilter,
+  orFilter,
 }

@@ -1,6 +1,9 @@
 <view class="ranking-page container">
   <text class="page-title gradient-text">今日欧皇榜</text>
-  <text class="page-sub">按今日幸运值排序 · TOP100</text>
+  <view class="page-head">
+    <text class="page-sub">按今日幸运值排序 · TOP100</text>
+    <text wx:if="{{updatedAtText}}" class="updated-at">{{updatedAtText}}</text>
+  </view>
 
   <view wx:if="{{!loading && list.length}}" class="stats-bar glass-card fade-in">
     <view class="stat-cell">
@@ -66,6 +69,16 @@
       </view>
     </view>
 
-    <view wx:if="{{list.length <= 3}}" class="rank-tip">榜单随今日正式签实时更新</view>
+    <view class="rank-tip">下拉刷新榜单 · 仅正式签计入排名</view>
   </block>
+
+  <view wx:if="{{myRankItem}}" class="my-rank-bar glass-card">
+    <text class="my-rank-no">#{{myRankItem.rank}}</text>
+    <image class="my-rank-avatar" src="{{myRankItem.avatar_url || defaultAvatar}}" mode="aspectFill" />
+    <view class="my-rank-info">
+      <text class="my-rank-name">我的排名</text>
+      <text class="my-rank-meta">{{myRankItem.title}}</text>
+    </view>
+    <text class="my-rank-score">{{myRankItem.score}}%</text>
+  </view>
 </view>

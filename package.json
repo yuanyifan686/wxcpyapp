@@ -1,8 +1,10 @@
 {
-  "name": "miniprogram-ts-quickstart",
+  "name": "cyber-fortune-miniprogram",
   "version": "1.0.0",
-  "description": "",
+  "description": "今日赛博运势 Web 版 + Netlify Functions API",
   "scripts": {
+    "dev": "netlify dev",
+    "build": "echo Static site — no build step"
   },
   "keywords": [],
   "author": "",

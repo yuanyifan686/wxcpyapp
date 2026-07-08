@@ -1,4 +1,7 @@
-.ranking-page { min-height: 100vh; }
+.ranking-page {
+  min-height: 100vh;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}
 
 .page-title {
   font-size: 44rpx;
@@ -6,11 +9,21 @@
   display: block;
 }
 
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
 .page-sub {
   font-size: 24rpx;
   color: #94A3B8;
-  display: block;
-  margin-bottom: 24rpx;
+}
+
+.updated-at {
+  font-size: 20rpx;
+  color: #64748B;
 }
 
 .stats-bar {
@@ -237,3 +250,36 @@
 .rank-right { text-align: right; flex-shrink: 0; }
 .rank-score { font-size: 32rpx; font-weight: 700; color: #22D3EE; display: block; }
 .rank-ssr { font-size: 20rpx; color: #A855F7; display: block; margin-top: 2rpx; }
+
+.my-rank-bar {
+  position: fixed;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: calc(120rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+  border: 1rpx solid rgba(34, 211, 238, 0.35);
+  background: rgba(10, 10, 18, 0.92);
+  z-index: 10;
+}
+
+.my-rank-no {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #22D3EE;
+  min-width: 56rpx;
+}
+
+.my-rank-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(34, 211, 238, 0.4);
+}
+
+.my-rank-info { flex: 1; min-width: 0; }
+.my-rank-name { font-size: 26rpx; font-weight: 600; color: #F8FAFC; display: block; }
+.my-rank-meta { font-size: 20rpx; color: #94A3B8; display: block; margin-top: 2rpx; }
+.my-rank-score { font-size: 32rpx; font-weight: 700; color: #22D3EE; }
