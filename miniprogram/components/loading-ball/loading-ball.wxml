@@ -1,4 +1,6 @@
-<view class="ball-wrap" bindtap="onTap">
+<view class="ball-wrap {{level === 'SSR' ? 'aura-ssr' : ''}} {{level === 'SR' ? 'aura-sr' : ''}}" bindtap="onTap">
+  <view class="ball-aura ball-aura-gold"></view>
+  <view class="ball-aura ball-aura-silver"></view>
   <view class="particles">
     <view wx:for="{{particles}}" wx:key="id" class="particle" style="left:{{item.x}}%;top:{{item.y}}%;animation-delay:{{item.delay}}s;"></view>
   </view>

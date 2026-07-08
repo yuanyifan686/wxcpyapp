@@ -145,6 +145,8 @@ async function renderHome() {
   const record = await fortune.checkTodayOfficial(state.getUserId())
   homeState.hasOfficialToday = !!record
   if (record) state.setCurrentFortune(record)
+  const todayLevel = record?.level || ''
+  const ballAuraClass = todayLevel ? ' aura-' + todayLevel.toLowerCase() : ''
 
   const homeInner = `
     <div class="home-page">
@@ -164,7 +166,9 @@ async function renderHome() {
         { icon: '👑', value: 'TOP100', label: '欧皇竞技' },
       ])}
       <section class="ball-section">
-        <div class="ball-wrap" id="fortune-ball">
+        <div class="ball-wrap aura-home${ballAuraClass}" id="fortune-ball">
+          <div class="ball-aura ball-aura-gold"></div>
+          <div class="ball-aura ball-aura-silver"></div>
           <div class="orbit-ring orbit-ring-1"><span class="orbit-dot"></span></div>
           <div class="orbit-ring orbit-ring-2"></div>
           <div class="particles" id="ball-particles"></div>
@@ -258,6 +262,7 @@ async function renderResult() {
   appEl.innerHTML = wrapPage(`
     <div class="result-wrap">
       <div class="ssr-flash" id="ssr-flash" hidden></div>
+      <div class="sr-flash" id="sr-flash" hidden></div>
       <div class="result-page">
         <button class="back-btn" id="back-home">← 返回</button>
         <section class="score-section glass-card neon-card stagger-show">
@@ -304,6 +309,7 @@ async function renderResult() {
           <span class="badge-level">${escapeHtml(f.level)}</span>
         </div>
         <div class="btn-row stagger-show" style="animation-delay:0.91s">
+          <button class="glass-btn" id="btn-ranking">👑 查看欧皇榜</button>
           <button class="glass-btn" id="btn-copy">复制分享文案</button>
           <button class="glass-btn ghost" id="back-home2">返回首页</button>
         </div>
@@ -313,6 +319,7 @@ async function renderResult() {
 
   document.getElementById('back-home')?.addEventListener('click', () => navigate('home'))
   document.getElementById('back-home2')?.addEventListener('click', () => navigate('home'))
+  document.getElementById('btn-ranking')?.addEventListener('click', () => navigate('ranking'))
   document.getElementById('btn-copy')?.addEventListener('click', () => copyShare(f, userInfo))
 
   const scoreEl = document.getElementById('score-num')
@@ -329,6 +336,10 @@ async function renderResult() {
 
   if (f.level === 'SSR') {
     const flash = document.getElementById('ssr-flash')
+    setTimeout(() => { flash?.removeAttribute('hidden') }, 300)
+    setTimeout(() => flash?.setAttribute('hidden', ''), 1300)
+  } else if (f.level === 'SR') {
+    const flash = document.getElementById('sr-flash')
     setTimeout(() => { flash?.removeAttribute('hidden') }, 300)
     setTimeout(() => flash?.setAttribute('hidden', ''), 1300)
   }

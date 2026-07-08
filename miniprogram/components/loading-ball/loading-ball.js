@@ -3,6 +3,7 @@ Component({
     hint: { type: String, value: '✨ 点击获取今日运势' },
     animating: { type: Boolean, value: false },
     exploding: { type: Boolean, value: false },
+    level: { type: String, value: '' },
   },
 
   data: {

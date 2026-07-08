@@ -8,6 +8,7 @@ Page({
     exploding: false,
     loading: false,
     hasOfficialToday: false,
+    todayLevel: '',
     ritualVisible: false,
     ritualTitle: '',
     ritualMsg: '',
@@ -54,7 +55,10 @@ Page({
     const app = getApp()
     const userId = app.globalData.userId
     fortuneService.checkTodayOfficial(userId).then((record) => {
-      this.setData({ hasOfficialToday: !!record })
+      this.setData({
+        hasOfficialToday: !!record,
+        todayLevel: record?.level || '',
+      })
       if (record) app.setCurrentFortune(record)
     })
   },
@@ -93,7 +97,13 @@ Page({
       .then(() => ritualUtil.completeRitual(this))
       .then(() => {
         this.setData({ animating: false, exploding: false, loading: false })
-        if (!isEntertainment) this.setData({ hasOfficialToday: true })
+        if (!isEntertainment) {
+          const fortune = app.getCurrentFortune()
+          this.setData({
+            hasOfficialToday: true,
+            todayLevel: fortune?.level || '',
+          })
+        }
         this.goResult()
       })
       .catch((err) => {

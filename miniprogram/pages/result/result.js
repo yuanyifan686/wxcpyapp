@@ -12,6 +12,7 @@ Page({
     nickname: '赛博旅人',
     reveal: 0,
     ssrFlash: false,
+    srFlash: false,
     particles: [],
   },
 
@@ -51,6 +52,12 @@ Page({
         wx.vibrateShort({ type: 'heavy' })
       }, 300)
       setTimeout(() => this.setData({ ssrFlash: false }), 1300)
+    } else if (fortune.level === 'SR') {
+      setTimeout(() => {
+        this.setData({ srFlash: true })
+        wx.vibrateShort({ type: 'medium' })
+      }, 300)
+      setTimeout(() => this.setData({ srFlash: false }), 1300)
     }
 
     setTimeout(() => {
@@ -84,6 +91,10 @@ Page({
 
   goHome() {
     wx.switchTab({ url: '/pages/home/home' })
+  },
+
+  goRanking() {
+    wx.switchTab({ url: '/pages/ranking/ranking' })
   },
 
   onShareAppMessage() {

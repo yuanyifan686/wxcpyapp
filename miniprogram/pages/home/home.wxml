@@ -15,6 +15,7 @@
       hint="{{hasOfficialToday ? '✨ 点击查看今日运势' : '✨ 点击获取今日运势'}}"
       animating="{{animating}}"
       exploding="{{exploding}}"
+      level="{{todayLevel}}"
       bind:tap="onBallTap"
     />
   </view>

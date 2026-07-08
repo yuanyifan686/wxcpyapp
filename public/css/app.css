@@ -562,6 +562,51 @@ html, body {
   box-shadow: 0 0 10px var(--accent);
 }
 
+/* 首页运势球：金球 + 银光呼吸 */
+.ball-aura {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.ball-aura-gold {
+  width: 230px;
+  height: 230px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.28) 0%, rgba(255, 180, 0, 0.08) 45%, transparent 72%);
+  animation: auraBreatheGold 3.2s ease-in-out infinite;
+}
+.ball-aura-silver {
+  width: 255px;
+  height: 255px;
+  background: radial-gradient(circle, rgba(220, 225, 255, 0.22) 0%, rgba(192, 192, 192, 0.08) 50%, transparent 75%);
+  animation: auraBreatheSilver 2.6s ease-in-out infinite 0.6s;
+}
+@keyframes auraBreatheGold {
+  0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.96); }
+  50% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.08); }
+}
+@keyframes auraBreatheSilver {
+  0%, 100% { opacity: 0.25; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
+}
+.ball-wrap.aura-ssr .ball {
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 36px rgba(255, 215, 0, 0.4), inset 0 0 24px rgba(255, 215, 0, 0.08);
+}
+.ball-wrap.aura-ssr .ball-aura-gold { animation-duration: 2.4s; }
+.ball-wrap.aura-sr .ball {
+  border-color: rgba(210, 215, 230, 0.55);
+  animation: breathe 3s ease-in-out infinite, silverBallPulse 2.2s ease-in-out infinite;
+}
+.ball-wrap.aura-sr .ball-aura-silver { animation-duration: 1.8s; }
+@keyframes silverBallPulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(192, 192, 210, 0.35); }
+  50% { box-shadow: 0 0 44px rgba(230, 235, 255, 0.55); }
+}
+
 .particles { position: absolute; inset: 0; pointer-events: none; }
 .float-particle, .particle {
   position: absolute;
@@ -834,7 +879,18 @@ html, body {
 }
 .ssr-flash[hidden] { display: none; }
 
+.sr-flash {
+  position: fixed; inset: 0;
+  background: radial-gradient(circle, rgba(210, 215, 235, 0.48) 0%, rgba(192, 192, 220, 0.2) 40%, transparent 72%);
+  z-index: 100; pointer-events: none;
+  animation: srFlash 1s ease forwards;
+}
+.sr-flash[hidden] { display: none; }
+
 @keyframes ssrFlash {
+  0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; }
+}
+@keyframes srFlash {
   0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; }
 }
 

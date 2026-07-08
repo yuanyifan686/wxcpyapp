@@ -1,6 +1,7 @@
 <view class="result-wrap" wx:if="{{fortune}}">
-  <!-- SSR 全屏闪光 -->
+  <!-- SSR / SR 全屏闪光 -->
   <view wx:if="{{ssrFlash}}" class="ssr-flash"></view>
+  <view wx:if="{{srFlash}}" class="sr-flash"></view>
   <view wx:if="{{ssrFlash}}" class="ssr-particles">
     <view wx:for="{{particles}}" wx:key="id" class="ssr-particle" style="left:{{item.x}}%;top:{{item.y}}%;animation-delay:{{item.delay}}s;"></view>
   </view>
@@ -47,6 +48,7 @@
     </view>
 
     <view class="btn-row {{reveal >= 8 ? 'stagger-show' : 'stagger-hide'}}">
+      <glass-button text="👑 查看欧皇榜" bind:tap="goRanking" />
       <glass-button text="生成分享海报" bind:tap="onSharePoster" />
       <glass-button text="返回首页" type="ghost" bind:tap="goHome" />
     </view>
