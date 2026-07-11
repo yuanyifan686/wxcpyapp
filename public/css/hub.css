@@ -1,0 +1,268 @@
+/* ── Cyber Lab Hub ── */
+:root {
+  --primary: #6C63FF;
+  --secondary: #A855F7;
+  --accent: #22D3EE;
+  --gold: #FFD700;
+  --danger: #FF3366;
+  --bg-dark: #06060f;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient */
+.viewport-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(108, 99, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108, 99, 255, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  animation: orbDrift 18s ease-in-out infinite;
+}
+.bg-orb-1 { width: 420px; height: 420px; background: rgba(108, 99, 255, 0.32); top: -120px; left: -80px; }
+.bg-orb-2 { width: 320px; height: 320px; background: rgba(168, 85, 247, 0.26); bottom: 5%; right: -60px; animation-delay: -6s; }
+.bg-orb-3 { width: 260px; height: 260px; background: rgba(34, 211, 238, 0.18); top: 48%; left: 42%; animation-delay: -12s; }
+
+@keyframes orbDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(28px, -18px) scale(1.05); }
+  66% { transform: translate(-18px, 22px) scale(0.96); }
+}
+
+/* Layout */
+.hub {
+  position: relative;
+  z-index: 1;
+  max-width: 880px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 48px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
+}
+
+.hub-header {
+  text-align: center;
+}
+
+.hub-chip {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.08);
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.hub-title {
+  font-size: clamp(32px, 6vw, 48px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+}
+
+.hub-title .accent {
+  color: var(--accent);
+  text-shadow: 0 0 28px rgba(34, 211, 238, 0.45);
+}
+
+.hub-subtitle {
+  margin-top: 12px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Cards */
+.hub-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 700px) {
+  .hub-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+.hub-card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 28px 24px;
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  min-height: 240px;
+}
+
+.hub-card:hover,
+.hub-card:focus-visible {
+  transform: translateY(-4px);
+  outline: none;
+}
+
+.fortune-card:hover,
+.fortune-card:focus-visible {
+  border-color: rgba(108, 99, 255, 0.55);
+  box-shadow: 0 16px 48px rgba(108, 99, 255, 0.18);
+}
+
+.game-card:hover,
+.game-card:focus-visible {
+  border-color: rgba(34, 211, 238, 0.55);
+  box-shadow: 0 16px 48px rgba(34, 211, 238, 0.16);
+}
+
+.card-glow {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.45;
+  pointer-events: none;
+  top: -40px;
+  right: -30px;
+}
+
+.fortune-card .card-glow {
+  background: rgba(108, 99, 255, 0.55);
+}
+
+.game-card .card-glow {
+  background: rgba(34, 211, 238, 0.45);
+}
+
+.card-icon {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 18px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.fortune-card .card-icon {
+  color: var(--primary);
+  box-shadow: 0 0 20px rgba(108, 99, 255, 0.25);
+}
+
+.game-card .card-icon {
+  color: var(--accent);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
+}
+
+.card-body {
+  position: relative;
+  z-index: 1;
+}
+
+.card-kicker {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.card-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  max-width: 32em;
+}
+
+.card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.fortune-card .card-cta { color: #c4b5fd; }
+.game-card .card-cta { color: var(--accent); }
+
+.card-cta .arrow {
+  transition: transform 0.2s ease;
+}
+
+.hub-card:hover .card-cta .arrow {
+  transform: translateX(4px);
+}
+
+.hub-footer {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+  .hub {
+    padding: 36px 16px 28px;
+    gap: 28px;
+    justify-content: flex-start;
+    padding-top: max(48px, env(safe-area-inset-top));
+  }
+  .hub-card {
+    min-height: 0;
+    padding: 22px 18px;
+  }
+}

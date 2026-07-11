@@ -1,0 +1,711 @@
+/* ── Cyber Destroy - Game Styles ── */
+:root {
+  --primary: #6C63FF;
+  --secondary: #A855F7;
+  --accent: #22D3EE;
+  --gold: #FFD700;
+  --danger: #FF3366;
+  --success: #10B981;
+  --bg-dark: #06060f;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --shadow-glass: 0 8px 32px rgba(108, 99, 255, 0.12);
+  --shadow-neon: 0 0 24px rgba(34, 211, 238, 0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans', monospace;
+  min-height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* ── Background ── */
+.viewport-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(108, 99, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108, 99, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orbDrift 18s ease-in-out infinite;
+}
+.bg-orb-1 { width: 400px; height: 400px; background: rgba(108, 99, 255, 0.3); top: -100px; left: -80px; }
+.bg-orb-2 { width: 300px; height: 300px; background: rgba(168, 85, 247, 0.25); bottom: 10%; right: -60px; animation-delay: -6s; }
+.bg-orb-3 { width: 250px; height: 250px; background: rgba(34, 211, 238, 0.2); top: 50%; left: 40%; animation-delay: -12s; }
+
+@keyframes orbDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 25px) scale(0.95); }
+}
+
+/* ── Game Container ── */
+.game-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(6, 6, 15, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.icon-btn:hover {
+  color: var(--accent);
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.game-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+.game-title .accent {
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.score-display, .combo-display, .level-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.score-label, .combo-label, .level-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+
+.level-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(34, 211, 238, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+.combo-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+  animation: comboPulse 0.3s ease-out;
+}
+
+@keyframes comboPulse {
+  0% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* ── Main Game Area ── */
+.game-main {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+/* ── Cyber Pet ── */
+.cyber-pet {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 12;
+  width: 126px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  pointer-events: none;
+  transition: transform 0.25s ease;
+}
+
+.pet-body {
+  position: relative;
+  width: 82px;
+  height: 78px;
+  border: 1px solid rgba(158, 239, 255, 0.58);
+  border-radius: 44px 44px 34px 34px;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.36), transparent 28%),
+    radial-gradient(circle at 50% 78%, rgba(255, 215, 0, 0.2), transparent 28%),
+    linear-gradient(145deg, rgba(126, 116, 255, 0.96), rgba(28, 23, 68, 0.98) 58%, rgba(6, 6, 15, 0.98));
+  box-shadow:
+    0 0 26px rgba(34, 211, 238, 0.34),
+    0 12px 30px rgba(0, 0, 0, 0.28),
+    inset 0 0 20px rgba(255, 255, 255, 0.13);
+  cursor: pointer;
+  pointer-events: auto;
+  animation: petFloat 2.8s ease-in-out infinite;
+}
+
+.pet-body::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pet-antenna {
+  position: absolute;
+  left: 50%;
+  top: -13px;
+  width: 2px;
+  height: 15px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.pet-antenna::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #FF8BD1;
+  transform: translateX(-50%);
+  box-shadow: 0 0 13px #FF8BD1;
+}
+
+.pet-ear {
+  position: absolute;
+  top: 11px;
+  width: 22px;
+  height: 28px;
+  border: 1px solid rgba(158, 239, 255, 0.45);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 139, 209, 0.22), transparent 45%),
+    rgba(15, 13, 42, 0.94);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.16);
+}
+.pet-ear-left {
+  left: -11px;
+  border-radius: 16px 7px 8px 16px;
+  transform: rotate(-8deg);
+}
+.pet-ear-right {
+  right: -11px;
+  border-radius: 7px 16px 16px 8px;
+  transform: rotate(8deg);
+}
+
+.pet-head-glow {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 34px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  transform: translateX(-50%);
+  filter: blur(0.2px);
+}
+
+.pet-face {
+  position: absolute;
+  left: 13px;
+  right: 13px;
+  top: 22px;
+  height: 32px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 28% 38%, rgba(34, 211, 238, 0.16), transparent 18%),
+    radial-gradient(circle at 72% 38%, rgba(34, 211, 238, 0.16), transparent 18%),
+    rgba(2, 8, 23, 0.54);
+  border: 1px solid rgba(158, 239, 255, 0.28);
+  overflow: hidden;
+}
+.pet-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(34, 211, 238, 0.1),
+    rgba(34, 211, 238, 0.1) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+  animation: petScan 1.4s linear infinite;
+}
+
+.pet-eye {
+  position: absolute;
+  top: 8px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 32%, #fff 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 55%, #8FF7FF 0 42%, #22D3EE 43% 70%, #08788F 71%);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.9);
+  z-index: 1;
+}
+.pet-eye-left { left: 10px; }
+.pet-eye-right { right: 10px; }
+.pet-cheek {
+  position: absolute;
+  top: 20px;
+  width: 10px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 139, 209, 0.75);
+  box-shadow: 0 0 8px rgba(255, 139, 209, 0.7);
+  z-index: 1;
+}
+.pet-cheek-left { left: 8px; }
+.pet-cheek-right { right: 8px; }
+.pet-mouth {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  width: 12px;
+  height: 6px;
+  border-bottom: 2px solid #FFFFFF;
+  border-radius: 0 0 10px 10px;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.pet-core {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFD700, #FF8BD1);
+  transform: translateX(-50%);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.85);
+}
+.pet-paw {
+  position: absolute;
+  bottom: -5px;
+  width: 19px;
+  height: 13px;
+  border-radius: 999px;
+  background: rgba(126, 116, 255, 0.94);
+  border: 1px solid rgba(158, 239, 255, 0.34);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.16);
+}
+.pet-paw-left { left: 16px; transform: rotate(8deg); }
+.pet-paw-right { right: 16px; transform: rotate(-8deg); }
+.pet-ring {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-top-color: rgba(255, 139, 209, 0.8);
+  border-right-color: rgba(34, 211, 238, 0.48);
+  animation: petOrbit 3.2s linear infinite;
+}
+
+.pet-bubble {
+  max-width: 126px;
+  padding: 7px 10px;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  border-radius: 12px;
+  background: rgba(6, 6, 15, 0.82);
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.14);
+  opacity: 0.92;
+  transform-origin: bottom center;
+}
+
+.pet-energy {
+  width: 76px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.pet-energy span {
+  display: block;
+  width: 18%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--gold), var(--danger));
+  box-shadow: 0 0 10px var(--accent);
+  transition: width 0.28s ease;
+}
+
+.cyber-pet.happy .pet-eye {
+  height: 6px;
+  border-radius: 999px;
+  transform: translateY(3px);
+  background: #8FF7FF;
+}
+.cyber-pet.hyped {
+  transform: translateY(-8px) scale(1.08);
+}
+.cyber-pet.hyped .pet-body {
+  animation: petBounce 0.32s ease-in-out infinite;
+  border-color: rgba(255, 215, 0, 0.7);
+}
+.cyber-pet.burst .pet-ring {
+  animation-duration: 0.55s;
+  border-top-color: var(--danger);
+  box-shadow: 0 0 22px rgba(255, 51, 102, 0.45);
+}
+
+@keyframes petFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes petBounce {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-7px) rotate(2deg); }
+}
+@keyframes petOrbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes petScan {
+  from { transform: translateY(-8px); }
+  to { transform: translateY(8px); }
+}
+
+/* ── Overlays ── */
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.start-screen, .pause-screen {
+  pointer-events: auto;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 15, 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.start-content, .pause-content {
+  text-align: center;
+  padding: 32px;
+}
+
+/* ── Glitch Effect ── */
+.glitch {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--text-primary);
+  position: relative;
+  animation: glitch 2s infinite;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.glitch::before {
+  animation: glitchTop 1s linear infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+  -webkit-clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+  color: var(--accent);
+}
+.glitch::after {
+  animation: glitchBottom 1.5s linear infinite;
+  clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+  -webkit-clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+  color: var(--secondary);
+}
+
+@keyframes glitch {
+  2%, 64% { transform: translate(2px, -2px) skew(0deg); }
+  4%, 60% { transform: translate(-2px, 2px) skew(0deg); }
+  62% { transform: translate(13px, -1px) skew(-1deg); }
+}
+
+@keyframes glitchTop {
+  2%, 64% { transform: translate(2px, -2px); }
+  4%, 60% { transform: translate(-2px, 2px); }
+  62% { transform: translate(13px, -1px); }
+}
+
+@keyframes glitchBottom {
+  2%, 64% { transform: translate(-2px, 0); }
+  4%, 60% { transform: translate(-2px, 0); }
+  62% { transform: translate(-22px, 5px); }
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  letter-spacing: 2px;
+}
+
+.howto {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+/* ── Cyber Button ── */
+.cyber-btn {
+  position: relative;
+  margin-top: 24px;
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--bg-dark);
+  background: linear-gradient(135deg, var(--accent), var(--primary));
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.cyber-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(34, 211, 238, 0.4);
+}
+.cyber-btn:active {
+  transform: translateY(0);
+}
+.cyber-btn.secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  margin-top: 12px;
+}
+.cyber-btn.secondary:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+}
+
+.btn-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: translateX(-100%);
+  animation: btnGlow 2s infinite;
+}
+
+@keyframes btnGlow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Level Clear ── */
+.level-screen {
+  pointer-events: auto;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 15, 0.88);
+  backdrop-filter: blur(10px);
+}
+
+.level-content {
+  text-align: center;
+  padding: 32px;
+}
+
+.level-kicker {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.level-content h2 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.level-bonus {
+  font-size: 14px;
+  color: var(--gold);
+  text-shadow: 0 0 14px rgba(255, 215, 0, 0.35);
+}
+
+/* ── Footer ── */
+.game-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(6, 6, 15, 0.8);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.footer-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.footer-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.stat-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.stat-item:first-of-type {
+  margin-left: auto;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Screen Shake ── */
+@keyframes shake {
+  0%, 100% { transform: translate(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 2px); }
+  20%, 40%, 60%, 80% { transform: translate(2px, -2px); }
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+.game-main.beat-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  box-shadow: inset 0 0 34px rgba(34, 211, 238, 0.13);
+  animation: beatPulse 0.16s ease-out;
+}
+
+@keyframes beatPulse {
+  from { opacity: 0.9; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.018); }
+}
+
+/* ── Mobile Adjustments ── */
+@media (max-width: 480px) {
+  .glitch {
+    font-size: 28px;
+  }
+  .score-value {
+    font-size: 20px;
+  }
+}

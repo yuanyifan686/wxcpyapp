@@ -4,14 +4,19 @@
   "description": "今日赛博运势 Web 版 + Netlify Functions API",
   "scripts": {
     "dev": "netlify dev",
+    "dev:hub": "netlify dev --open=/",
+    "dev:fortune": "netlify dev --open=/fortune.html",
+    "dev:game": "netlify dev --open=/game.html",
     "build": "echo Static site — no build step"
   },
   "keywords": [],
   "author": "",
   "license": "",
   "dependencies": {
+    "matter-js": "^0.20.0"
   },
   "devDependencies": {
-    "miniprogram-api-typings": "^2.8.3-1"
+    "miniprogram-api-typings": "^2.8.3-1",
+    "netlify-cli": "^26.2.0"
   }
 }

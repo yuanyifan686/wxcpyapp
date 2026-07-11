@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="今日赛博运势 - AI 生成你的打工人幸运值" />
-  <meta name="theme-color" content="#0a0a12" />
-  <title>今日赛博运势</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="/css/app.css" />
+  <meta name="description" content="赛博工坊 - 今日运势与解压小游戏" />
+  <meta name="theme-color" content="#06060f" />
+  <title>赛博工坊 | Cyber Lab</title>
+  <link rel="stylesheet" href="/css/hub.css" />
 </head>
 <body>
   <div class="viewport-bg" aria-hidden="true">
@@ -17,42 +16,42 @@
     <div class="bg-grid"></div>
   </div>
 
-  <div class="app-shell">
-    <div class="device-frame">
-      <div class="status-bar">
-        <span class="status-time" id="status-time">00:00</span>
-        <span class="status-brand">CYBER FORTUNE</span>
-        <span class="status-icons">
-          <span class="signal"></span>
-          <span class="wifi"></span>
-          <span class="battery"></span>
-        </span>
-      </div>
-      <main id="app"></main>
-      <nav id="tab-bar" class="tab-bar">
-        <button class="tab-item active" data-tab="home" type="button">
-          <span class="tab-icon"></span>
-          <span class="tab-text">运势</span>
-          <span class="tab-glow"></span>
-        </button>
-        <button class="tab-item" data-tab="history" type="button">
-          <span class="tab-icon"></span>
-          <span class="tab-text">历史</span>
-          <span class="tab-glow"></span>
-        </button>
-        <button class="tab-item" data-tab="ranking" type="button">
-          <span class="tab-icon"></span>
-          <span class="tab-text">欧皇榜</span>
-          <span class="tab-glow"></span>
-        </button>
-        <button class="tab-item" data-tab="profile" type="button">
-          <span class="tab-icon"></span>
-          <span class="tab-text">我的</span>
-          <span class="tab-glow"></span>
-        </button>
-      </nav>
-    </div>
-  </div>
-  <script type="module" src="/js/app.js"></script>
+  <main class="hub">
+    <header class="hub-header">
+      <p class="hub-chip">CYBER LAB · 2026</p>
+      <h1 class="hub-title">
+        赛博<span class="accent">工坊</span>
+      </h1>
+      <p class="hub-subtitle">选一条路进入：看今日运势，或砸碎一切解压</p>
+    </header>
+
+    <section class="hub-cards" aria-label="功能入口">
+      <a class="hub-card fortune-card" href="/fortune.html">
+        <div class="card-glow" aria-hidden="true"></div>
+        <div class="card-icon" aria-hidden="true">✦</div>
+        <div class="card-body">
+          <span class="card-kicker">AI FORTUNE</span>
+          <h2 class="card-title">今日赛博运势</h2>
+          <p class="card-desc">每日抽签、幸运值、欧皇榜与分享海报。AI 生成打工人今日 Buff。</p>
+          <span class="card-cta">进入运势 <span class="arrow">→</span></span>
+        </div>
+      </a>
+
+      <a class="hub-card game-card" href="/game.html">
+        <div class="card-glow" aria-hidden="true"></div>
+        <div class="card-icon" aria-hidden="true">◈</div>
+        <div class="card-body">
+          <span class="card-kicker">LEVEL CAMPAIGN</span>
+          <h2 class="card-title">赛博解压</h2>
+          <p class="card-desc">闯关砸碎：清掉全部目标通关，关卡越高物体越硬越挤。</p>
+          <span class="card-cta">开始闯关 <span class="arrow">→</span></span>
+        </div>
+      </a>
+    </section>
+
+    <footer class="hub-footer">
+      <p>两套体验独立运行 · 共享赛博视觉风格</p>
+    </footer>
+  </main>
 </body>
 </html>

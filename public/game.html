@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="description" content="赛博解压 - 击碎压力块的释放小游戏" />
+  <meta name="theme-color" content="#06060f" />
+  <title>赛博解压 | STRESS RELEASE</title>
+  <link rel="stylesheet" href="/css/game.css" />
+  <script src="/js/vendor/matter.min.js"></script>
+</head>
+<body>
+  <div class="viewport-bg" aria-hidden="true">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <button id="btn-home" class="icon-btn" title="返回主页" aria-label="返回主页">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </button>
+        <h1 class="game-title">STRESS <span class="accent">RELEASE</span></h1>
+      </div>
+      <div class="header-right">
+        <div class="level-display">
+          <span class="level-label">LEVEL</span>
+          <span id="level" class="level-value">1</span>
+        </div>
+        <div class="score-display">
+          <span class="score-label">SCORE</span>
+          <span id="score" class="score-value">0</span>
+        </div>
+        <div class="combo-display" id="combo-container" style="display: none;">
+          <span class="combo-label">COMBO</span>
+          <span id="combo" class="combo-value">x2</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <canvas id="game-canvas"></canvas>
+      <div class="cyber-pet" id="cyber-pet" aria-live="polite">
+        <div class="pet-bubble" id="pet-bubble">今天的压力，交给我吞掉</div>
+        <button class="pet-body" id="pet-body" type="button" aria-label="赛博小宠物">
+          <span class="pet-antenna"></span>
+          <span class="pet-ear pet-ear-left"></span>
+          <span class="pet-ear pet-ear-right"></span>
+          <span class="pet-head-glow"></span>
+          <span class="pet-face">
+            <span class="pet-eye pet-eye-left"></span>
+            <span class="pet-eye pet-eye-right"></span>
+            <span class="pet-cheek pet-cheek-left"></span>
+            <span class="pet-cheek pet-cheek-right"></span>
+            <span class="pet-mouth"></span>
+          </span>
+          <span class="pet-core"></span>
+          <span class="pet-paw pet-paw-left"></span>
+          <span class="pet-paw pet-paw-right"></span>
+          <span class="pet-ring"></span>
+        </button>
+        <div class="pet-energy" aria-hidden="true">
+          <span id="pet-energy-fill"></span>
+        </div>
+      </div>
+      <div id="game-ui" class="game-overlay">
+        <div class="start-screen" id="start-screen">
+          <div class="start-content">
+            <h2 class="glitch" data-text="STRESS RELEASE">STRESS RELEASE</h2>
+            <p class="subtitle">把今天的烦躁清空</p>
+            <p class="howto">点击敲碎，拖拽扫过，长按蓄力后松开爆破</p>
+            <button id="btn-start" class="cyber-btn">
+              <span>开始释放</span>
+              <div class="btn-glow"></div>
+            </button>
+          </div>
+        </div>
+
+        <div class="level-screen" id="level-screen" style="display: none;">
+          <div class="level-content">
+            <p class="level-kicker">压力已清空</p>
+            <h2 id="level-clear-title">第 1 波释放完成</h2>
+            <p class="level-bonus" id="level-bonus-text">情绪缓存 -500</p>
+            <button id="btn-next-level" class="cyber-btn">
+              <span>下一波</span>
+              <div class="btn-glow"></div>
+            </button>
+          </div>
+        </div>
+
+        <div class="pause-screen" id="pause-screen" style="display: none;">
+          <div class="pause-content">
+            <h2>PAUSED</h2>
+            <button id="btn-resume" class="cyber-btn"><span>继续</span></button>
+            <button id="btn-restart" class="cyber-btn secondary"><span>重新开始</span></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="game-footer">
+      <button id="btn-pause" class="footer-btn" title="暂停">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16" rx="1"/>
+          <rect x="14" y="4" width="4" height="16" rx="1"/>
+        </svg>
+      </button>
+      <button id="btn-restart-level" class="footer-btn" title="重打本关">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </button>
+      <div class="stat-item">
+        <span class="stat-label">pressure</span>
+        <span id="stat-left" class="stat-value">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">smashed</span>
+        <span id="stat-smashed" class="stat-value">0</span>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="/js/game.js"></script>
+</body>
+</html>
