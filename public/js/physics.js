@@ -20,8 +20,12 @@ export class PhysicsEngine {
 
   createWorld() {
     this.engine = Engine.create({
+      enableSleeping: true,
       gravity: { x: 0, y: 0.45 }
     });
+    this.engine.positionIterations = 4;
+    this.engine.velocityIterations = 3;
+    this.engine.constraintIterations = 1;
     this.world = this.engine.world;
     this.bodies = [];
     this.fragments = [];
@@ -105,18 +109,19 @@ export class PhysicsEngine {
   }
 
   update(delta = 1000 / 60) {
+    delta = Math.min(delta, 1000 / 45);
     Engine.update(this.engine, delta);
     this.enforceBounceBounds();
 
-    // Fade out fragments and remove expired ones from the world
+    // Visual-only fragments: cheap canvas particles, not Matter bodies.
     this.fragments = this.fragments.filter(f => {
       f.life -= delta;
       f.opacity = Math.max(0, f.life / f.maxLife);
-      if (f.life <= 0) {
-        this.removeBody(f.body);
-        return false;
-      }
-      return true;
+      f.x += f.vx * (delta / 16.67);
+      f.y += f.vy * (delta / 16.67);
+      f.vy += f.gravity * (delta / 16.67);
+      f.angle += f.angularVelocity * (delta / 16.67);
+      return f.life > 0;
     });
   }
 
@@ -174,7 +179,6 @@ export class PhysicsEngine {
     if (!body) return;
     World.remove(this.world, body);
     this.bodies = this.bodies.filter(b => b !== body);
-    this.fragments = this.fragments.filter(f => f.body !== body);
   }
 
   getBodiesAtPoint(x, y) {
@@ -288,6 +292,63 @@ export class PhysicsEngine {
     return this.addBody(body);
   }
 
+  createCyberTriangle(x, y, options = {}) {
+    const radius = options.radius || 28 + Math.random() * 18;
+    const colors = ['#8B5CF6', '#22D3EE', '#FF8BD1'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const body = Bodies.polygon(x, y, 3, radius, {
+      angle: Math.random() * Math.PI,
+      restitution: 1.05,
+      friction: 0.04,
+      frictionAir: 0.012,
+      density: 0.00065,
+      ...options
+    });
+
+    body.cyberData = {
+      type: 'triangle',
+      role: options.role || 'pressure',
+      color,
+      radius,
+      width: radius * 1.8,
+      height: radius * 1.8,
+      health: 70,
+      maxHealth: 70,
+      crackSeed: Math.random() * 1000
+    };
+
+    return this.addBody(body);
+  }
+
+  createCyberCapsule(x, y, options = {}) {
+    const width = options.width || 82 + Math.random() * 46;
+    const height = options.height || 26 + Math.random() * 12;
+    const colors = ['#10B981', '#22D3EE', '#FFD700'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const body = Bodies.rectangle(x, y, width, height, {
+      chamfer: { radius: height / 2 },
+      angle: Math.random() * Math.PI,
+      restitution: 0.98,
+      friction: 0.05,
+      frictionAir: 0.012,
+      density: 0.0012,
+      ...options
+    });
+
+    body.cyberData = {
+      type: 'capsule',
+      role: options.role || 'pressure',
+      color,
+      width,
+      height,
+      health: 90,
+      maxHealth: 90,
+      crackSeed: Math.random() * 1000
+    };
+
+    return this.addBody(body);
+  }
+
   createPressureBomb(x, y, options = {}) {
     const body = this.createCyberSphere(x, y, {
       radius: options.radius || 24 + Math.random() * 12,
@@ -314,49 +375,26 @@ export class PhysicsEngine {
     for (let i = 0; i < count; i++) {
       const size = 5 + Math.random() * 15;
       const fragH = size * (0.5 + Math.random());
-      const fragment = Bodies.rectangle(
-        position.x + (Math.random() - 0.5) * 40,
-        position.y + (Math.random() - 0.5) * 40,
-        size,
-        fragH,
-        {
-          angle: Math.random() * Math.PI * 2,
-          restitution: 0.88,
-          friction: 0.08,
-          frictionAir: 0.018,
-          density: 0.001
-        }
-      );
-
-      fragment.cyberData = {
-        type: 'fragment',
+      this.fragments.push({
+        x: position.x + (Math.random() - 0.5) * 40,
+        y: position.y + (Math.random() - 0.5) * 40,
+        vx: (Math.random() - 0.5) * 9,
+        vy: -2 - Math.random() * 7,
+        angle: Math.random() * Math.PI * 2,
+        angularVelocity: (Math.random() - 0.5) * 0.24,
         color: cyberData.color,
         width: size,
         height: fragH,
-        health: 30,
-        maxHealth: 30,
-        crackSeed: Math.random() * 1000
-      };
-
-      const force = {
-        x: (Math.random() - 0.5) * 0.02,
-        y: -(Math.random() * 0.02)
-      };
-      Body.applyForce(fragment, fragment.position, force);
-
-      this.addBody(fragment);
-      this.fragments.push({
-        body: fragment,
         life: 1000 + Math.random() * 700,
         maxLife: 1700,
-        opacity: 1
+        opacity: 1,
+        gravity: 0.22
       });
     }
 
     const maxFragments = 55;
     if (this.fragments.length > maxFragments) {
-      const overflow = this.fragments.splice(0, this.fragments.length - maxFragments);
-      overflow.forEach((f) => this.removeBody(f.body));
+      this.fragments.splice(0, this.fragments.length - maxFragments);
     }
   }
 

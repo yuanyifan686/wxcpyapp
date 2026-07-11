@@ -5,7 +5,7 @@ export class SoundEngine {
     this.initialized = false;
     this.masterGain = null;
     this.compressor = null;
-    this.volume = 0.48;
+    this.volume = 0.58;
     this.bgmGain = null;
     this.bgmTimer = null;
     this.bpm = 132;
@@ -29,7 +29,7 @@ export class SoundEngine {
       this.masterGain.connect(this.compressor);
       this.compressor.connect(this.ctx.destination);
       this.bgmGain = this.ctx.createGain();
-      this.bgmGain.gain.value = 0.22;
+      this.bgmGain.gain.value = 0.3;
       this.bgmGain.connect(this.masterGain);
       this.initialized = true;
       this.wake();
@@ -187,20 +187,20 @@ export class SoundEngine {
     thump.type = 'sine';
     thump.frequency.setValueAtTime(92 * strength, now);
     thump.frequency.exponentialRampToValueAtTime(38, now + 0.16);
-    gain.gain.setValueAtTime(0.34 * strength, now);
+    gain.gain.setValueAtTime(0.48 * strength, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
     thump.connect(gain);
     gain.connect(this.masterGain);
     thump.start(now);
     thump.stop(now + 0.18);
 
-    this.noiseBurst(0.09, 0.18 * strength, 'lowpass', 520, 0.8);
+    this.noiseBurst(0.11, 0.28 * strength, 'lowpass', 620, 0.8);
   }
 
   playCrack(intensity = 1) {
     if (!this.initialized) return;
     const strength = Math.max(0.4, Math.min(1.4, intensity));
-    this.noiseBurst(0.12, 0.22 * strength, 'bandpass', 1300 + Math.random() * 900, 4);
+    this.noiseBurst(0.13, 0.32 * strength, 'bandpass', 1300 + Math.random() * 900, 4);
     this.playTone(220 + Math.random() * 80, 0.055, 'triangle');
     setTimeout(() => this.playTone(480 + Math.random() * 160, 0.04, 'square'), 28);
   }
@@ -209,8 +209,8 @@ export class SoundEngine {
     if (!this.initialized) return;
     const strength = Math.max(0.7, Math.min(1.8, intensity));
     this.playImpact(1.05 * strength);
-    this.noiseBurst(0.22, 0.34 * strength, 'highpass', 1800, 0.7);
-    this.noiseBurst(0.16, 0.24 * strength, 'bandpass', 4200, 5);
+    this.noiseBurst(0.24, 0.44 * strength, 'highpass', 1700, 0.7);
+    this.noiseBurst(0.18, 0.34 * strength, 'bandpass', 4300, 5);
 
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {

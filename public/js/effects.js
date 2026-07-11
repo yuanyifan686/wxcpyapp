@@ -6,8 +6,8 @@ export class ParticleSystem {
     this.particles = [];
     this.shockwaves = [];
     this.typeBursts = [];
-    this.maxParticles = 180;
-    this.maxTypeBursts = 4;
+    this.maxParticles = 140;
+    this.maxTypeBursts = 3;
   }
 
   trimParticles() {
@@ -261,6 +261,7 @@ export class ParticleSystem {
   }
 
   emitTypographyBurst(x, y, options = {}) {
+    if (this.particles.length > 105 || this.typeBursts.length >= this.maxTypeBursts) return;
     this.typeBursts.push({
       x,
       y,

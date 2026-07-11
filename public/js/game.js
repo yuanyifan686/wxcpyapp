@@ -30,6 +30,7 @@ class Game {
     this.pointerDownAt = 0;
     this.pointerDownPos = { x: 0, y: 0 };
     this.chargeTimer = null;
+    this.chargeRaf = null;
     this.isCharging = false;
     this.chargeStart = 0;
     this.pet = {
@@ -40,6 +41,13 @@ class Game {
       power: 18,
       moodTimer: null,
       lineTimer: null
+    };
+    this.chargeUi = {
+      el: document.getElementById('charge-indicator'),
+      fill: document.getElementById('charge-fill'),
+      label: document.getElementById('charge-label'),
+      bar: document.getElementById('charge-bar-fill'),
+      ready: document.getElementById('charge-ready')
     };
 
     this.init();
@@ -149,6 +157,7 @@ class Game {
     const pos = this.getCanvasPos(e);
     const moved = Math.hypot(pos.x - this.pointerDownPos.x, pos.y - this.pointerDownPos.y);
     if (moved > 12 && this.isCharging) this.cancelCharge();
+    if (this.isCharging) this.updateChargeUi(pos, performance.now() - this.chargeStart);
 
     // Swipe trail + continuous smash (still one mode)
     this.effects.particles.push({
@@ -187,6 +196,8 @@ class Game {
       if (!this.isDragging || this.state !== 'playing') return;
       this.isCharging = true;
       this.chargeStart = performance.now();
+      this.showChargeUi(pos, 0);
+      this.tickChargeUi();
       this.effects.emitPressureText(pos.x, pos.y - 26, '蓄力中', '#22D3EE');
       this.petSay('能量蓄满，准备清空');
       this.setPetMood('hyped', 1200);
@@ -196,13 +207,17 @@ class Game {
 
   cancelCharge() {
     clearTimeout(this.chargeTimer);
+    cancelAnimationFrame(this.chargeRaf);
     this.isCharging = false;
+    this.hideChargeUi();
   }
 
   releaseCharge(x, y, held) {
     const charge = Math.min(1, Math.max(0.35, held / 1100));
     const radius = 120 + charge * 150;
     const damage = 70 + charge * 100;
+    cancelAnimationFrame(this.chargeRaf);
+    this.hideChargeUi();
 
     this.physics.applyExplosion(x, y, 0.045 + charge * 0.045, radius);
     this.effects.addShockwave(x, y, '#FFD700', radius);
@@ -218,6 +233,7 @@ class Game {
       life: 920
     });
     this.sound.playExplosion();
+    this.vibrate([18, 25, 42]);
     this.feedPet(16, '这一下很解压');
     this.setPetMood('burst', 1300);
     this.addScreenShake(480);
@@ -226,6 +242,34 @@ class Game {
       if (!body.cyberData || body.cyberData.type === 'fragment') return;
       this.damageBody(body, damage, { x, y, impulse: 0.035, fromBlast: true });
     });
+  }
+
+  showChargeUi(pos, held) {
+    if (!this.chargeUi.el) return;
+    this.chargeUi.el.classList.add('active');
+    this.updateChargeUi(pos, held);
+  }
+
+  updateChargeUi(pos, held) {
+    if (!this.chargeUi.el) return;
+    const pct = Math.min(1, Math.max(0, held / 1100));
+    this.chargeUi.el.style.left = `${pos.x}px`;
+    this.chargeUi.el.style.top = `${pos.y - 44}px`;
+    this.chargeUi.el.style.setProperty('--charge', `${Math.round(pct * 360)}deg`);
+    if (this.chargeUi.bar) this.chargeUi.bar.style.height = `${Math.round(pct * 100)}%`;
+    this.chargeUi.el.classList.toggle('ready', pct >= 0.96);
+    if (this.chargeUi.label) this.chargeUi.label.textContent = pct >= 0.96 ? '松开释放' : '蓄力中';
+  }
+
+  tickChargeUi() {
+    if (!this.isCharging) return;
+    this.updateChargeUi(this.lastMousePos, performance.now() - this.chargeStart);
+    this.chargeRaf = requestAnimationFrame(() => this.tickChargeUi());
+  }
+
+  hideChargeUi() {
+    this.chargeUi.el?.classList.remove('active', 'ready');
+    if (this.chargeUi.bar) this.chargeUi.bar.style.height = '0%';
   }
 
   tryHit(x, y, force = false, powerScale = 1) {
@@ -279,6 +323,7 @@ class Game {
       });
       this.sound.playShatter(cyberData.type === 'neon' || cyberData.role === 'heavy' ? 1.35 : 1);
       if (beat.accuracy > 0.48) this.sound.playRhythmHit(0.72, beat.accuracy);
+      this.vibrate(cyberData.role === 'bomb' ? [12, 18, 28] : 18);
 
       this.updateCombo();
       const points = this.calculatePoints(cyberData.type);
@@ -322,6 +367,7 @@ class Game {
       }
       this.sound.playCrack(0.75 + (1 - cyberData.health / cyberData.maxHealth) * 0.65);
       this.sound.playRhythmHit(0.45, beat.accuracy);
+      this.vibrate(8);
       if (beat.label) {
         this.effects.emitPressureText(
           position.x,
@@ -353,6 +399,7 @@ class Game {
       spin: 0.04
     });
     this.sound.playExplosion();
+    this.vibrate([16, 20, 36]);
     this.feedPet(22, '连锁释放，好爽');
     this.setPetMood('burst', 1400);
     this.addScreenShake(520);
@@ -409,6 +456,10 @@ class Game {
     const frame = document.querySelector('.game-main');
     frame.classList.add('shake');
     setTimeout(() => frame.classList.remove('shake'), duration);
+  }
+
+  vibrate(pattern) {
+    if (navigator.vibrate) navigator.vibrate(pattern);
   }
 
   countTargets() {
@@ -494,21 +545,21 @@ class Game {
 
   getLevelConfig(level) {
     const waves = [
-      { cols: 3, rows: 3, healthMul: 0.58, bombCount: 0, heavyCount: 0, clearBonus: 500 },
-      { cols: 4, rows: 3, healthMul: 0.72, bombCount: 1, heavyCount: 0, clearBonus: 750 },
-      { cols: 4, rows: 4, healthMul: 0.78, bombCount: 2, heavyCount: 1, clearBonus: 1000 },
-      { cols: 5, rows: 4, healthMul: 0.9, bombCount: 3, heavyCount: 2, clearBonus: 1300 },
-      { cols: 6, rows: 4, healthMul: 0.82, bombCount: 5, heavyCount: 0, clearBonus: 1800 },
+      { cols: 3, rows: 3, healthMul: 0.52, bombCount: 0, heavyCount: 0, clearBonus: 500 },
+      { cols: 4, rows: 3, healthMul: 0.64, bombCount: 1, heavyCount: 0, clearBonus: 750 },
+      { cols: 4, rows: 3, healthMul: 0.72, bombCount: 2, heavyCount: 1, clearBonus: 1000 },
+      { cols: 5, rows: 3, healthMul: 0.8, bombCount: 3, heavyCount: 1, clearBonus: 1300 },
+      { cols: 5, rows: 4, healthMul: 0.82, bombCount: 4, heavyCount: 1, clearBonus: 1800 },
     ];
     const base = waves[Math.min(level - 1, waves.length - 1)];
     const extra = Math.max(0, level - waves.length);
     return {
       ...base,
-      cols: Math.min(base.cols + Math.floor(extra / 2), 7),
-      rows: Math.min(base.rows + Math.floor(extra / 3), 5),
-      bombCount: Math.min(base.bombCount + extra, 9),
-      heavyCount: Math.min(base.heavyCount + Math.floor(extra / 2), 6),
-      healthMul: base.healthMul + extra * 0.08,
+      cols: Math.min(base.cols + Math.floor(extra / 3), 6),
+      rows: Math.min(base.rows + Math.floor(extra / 4), 4),
+      bombCount: Math.min(base.bombCount + Math.ceil(extra / 2), 7),
+      heavyCount: Math.min(base.heavyCount + Math.floor(extra / 3), 4),
+      healthMul: base.healthMul + extra * 0.06,
       clearBonus: base.clearBonus + extra * 420
     };
   }
@@ -527,9 +578,13 @@ class Game {
         const y = padding + cellH * (j + 0.5) + (Math.random() - 0.5) * 14;
         const roll = Math.random();
         let body;
-        if (roll > 0.62) {
+        if (roll > 0.78) {
+          body = this.physics.createCyberTriangle(x, y);
+        } else if (roll > 0.58) {
+          body = this.physics.createCyberCapsule(x, y);
+        } else if (roll > 0.38) {
           body = this.physics.createCyberSphere(x, y);
-        } else if (roll > 0.28) {
+        } else if (roll > 0.16) {
           body = this.physics.createCyberBlock(x, y);
         } else {
           body = this.physics.createNeonTube(x, y, (Math.random() - 0.5) * 0.5);
@@ -689,9 +744,9 @@ class Game {
     this.ctx.translate(position.x, position.y);
     this.ctx.rotate(angle + (Math.random() - 0.5) * jolt * 0.08);
 
-    const crowded = this.physics.bodies.length > 45;
+    const crowded = this.physics.bodies.length > 24;
     this.ctx.shadowColor = color;
-    this.ctx.shadowBlur = crowded ? 5 + damage * 8 : 15 + damage * 20;
+    this.ctx.shadowBlur = crowded ? 2 + damage * 5 : 15 + damage * 20;
 
     if (type === 'sphere') {
       const gradient = this.ctx.createRadialGradient(
@@ -722,6 +777,44 @@ class Game {
 
       this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
       this.ctx.fillRect(-width / 2 + 2, -height / 4, width - 4, height / 2);
+    } else if (type === 'triangle') {
+      const r = radius || Math.max(width, height) / 2;
+      const gradient = this.ctx.createLinearGradient(-r, -r, r, r);
+      gradient.addColorStop(0, this.lightenColor(color, 30));
+      gradient.addColorStop(1, this.darkenColor(color, 28));
+
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 3;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r;
+        if (i === 0) this.ctx.moveTo(px, py);
+        else this.ctx.lineTo(px, py);
+      }
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#FFFFFF';
+      this.ctx.globalAlpha = 0.85;
+      this.ctx.lineWidth = 1.4;
+      this.ctx.stroke();
+      this.ctx.globalAlpha = 1;
+    } else if (type === 'capsule') {
+      const rr = height / 2;
+      const gradient = this.ctx.createLinearGradient(-width / 2, 0, width / 2, 0);
+      gradient.addColorStop(0, this.lightenColor(color, 25));
+      gradient.addColorStop(0.5, color);
+      gradient.addColorStop(1, this.darkenColor(color, 32));
+
+      this.ctx.fillStyle = gradient;
+      this.roundRect(-width / 2, -height / 2, width, height, rr);
+      this.ctx.fill();
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+      this.ctx.lineWidth = 1.2;
+      this.ctx.stroke();
+      this.ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      this.roundRect(-width / 2 + 8, -height / 4, width * 0.38, height / 3, height / 6);
+      this.ctx.fill();
     } else {
       const gradient = this.ctx.createLinearGradient(-width / 2, -height / 2, width / 2, height / 2);
       gradient.addColorStop(0, this.lightenColor(color, 20));
@@ -797,26 +890,37 @@ class Game {
   }
 
   drawFragment(fragment) {
-    const { body, opacity } = fragment;
-    const { position, angle, cyberData } = body;
-    if (!cyberData) return;
-
     this.ctx.save();
-    this.ctx.globalAlpha = opacity;
-    this.ctx.translate(position.x, position.y);
-    this.ctx.rotate(angle);
+    this.ctx.globalAlpha = fragment.opacity;
+    this.ctx.translate(fragment.x, fragment.y);
+    this.ctx.rotate(fragment.angle);
 
-    this.ctx.fillStyle = cyberData.color;
+    this.ctx.fillStyle = fragment.color;
     if (this.physics.fragments.length < 28) {
-      this.ctx.shadowColor = cyberData.color;
+      this.ctx.shadowColor = fragment.color;
       this.ctx.shadowBlur = 6;
     }
 
-    const w = cyberData.width;
-    const h = cyberData.height;
+    const w = fragment.width;
+    const h = fragment.height;
     this.ctx.fillRect(-w / 2, -h / 2, w, h);
 
     this.ctx.restore();
+  }
+
+  roundRect(x, y, w, h, r) {
+    const radius = Math.min(r, w / 2, h / 2);
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + radius, y);
+    this.ctx.lineTo(x + w - radius, y);
+    this.ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    this.ctx.lineTo(x + w, y + h - radius);
+    this.ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    this.ctx.lineTo(x + radius, y + h);
+    this.ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    this.ctx.lineTo(x, y + radius);
+    this.ctx.quadraticCurveTo(x, y, x + radius, y);
+    this.ctx.closePath();
   }
 
   seededRandom(seed, i) {

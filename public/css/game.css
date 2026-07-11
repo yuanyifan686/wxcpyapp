@@ -695,6 +695,121 @@ html, body {
   animation: beatPulse 0.16s ease-out;
 }
 
+/* ── Charge Hint ── */
+.charge-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 14;
+  width: 76px;
+  height: 90px;
+  display: none;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.charge-indicator.active {
+  display: flex;
+}
+
+.charge-ring {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(6, 6, 15, 0.94) 0 48%, transparent 49%),
+    conic-gradient(var(--gold) var(--charge, 0deg), rgba(34, 211, 238, 0.16) 0);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.28);
+}
+
+.charge-ring::after {
+  content: "";
+  position: absolute;
+  inset: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFD700, #FF8BD1 55%, transparent 60%);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.8);
+}
+
+.charge-label {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(6, 6, 15, 0.78);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.55);
+}
+
+.charge-side {
+  position: absolute;
+  left: 68px;
+  top: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+}
+
+.charge-bar {
+  position: relative;
+  width: 8px;
+  height: 52px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.28);
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.35);
+}
+
+.charge-bar span {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  border-radius: inherit;
+  background: linear-gradient(to top, var(--accent), var(--gold), #FF8BD1);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+  transition: height 0.08s linear;
+}
+
+.charge-ready {
+  display: none;
+  padding: 4px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 215, 0, 0.62);
+  background: rgba(255, 215, 0, 0.14);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.75);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.28);
+}
+
+.charge-indicator.ready .charge-ready {
+  display: inline-flex;
+  animation: readyPulse 0.36s ease-in-out infinite alternate;
+}
+
+.charge-indicator.ready .charge-ring {
+  border-color: rgba(255, 215, 0, 0.88);
+  box-shadow: 0 0 34px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes readyPulse {
+  from { transform: scale(1); opacity: 0.82; }
+  to { transform: scale(1.08); opacity: 1; }
+}
+
 @keyframes beatPulse {
   from { opacity: 0.9; transform: scale(1); }
   to { opacity: 0; transform: scale(1.018); }
