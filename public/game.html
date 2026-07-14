@@ -45,28 +45,79 @@
 
     <main class="game-main">
       <canvas id="game-canvas"></canvas>
-      <div class="cyber-pet" id="cyber-pet" aria-live="polite">
-        <div class="pet-bubble" id="pet-bubble">今天的压力，交给我吞掉</div>
-        <button class="pet-body" id="pet-body" type="button" aria-label="赛博小宠物">
-          <span class="pet-antenna"></span>
-          <span class="pet-ear pet-ear-left"></span>
-          <span class="pet-ear pet-ear-right"></span>
-          <span class="pet-head-glow"></span>
+      <!-- Side beat rails — pulse with BGM for decompression feel -->
+      <div class="beat-sides" id="beat-sides" aria-hidden="true">
+        <div class="beat-rail beat-rail-left">
+          <span class="rail-core"></span>
+          <span class="rail-glow"></span>
+          <span class="rail-bars">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+        </div>
+        <div class="beat-rail beat-rail-right">
+          <span class="rail-core"></span>
+          <span class="rail-glow"></span>
+          <span class="rail-bars">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+        </div>
+      </div>
+      <div id="track-badge" class="track-badge" aria-live="polite"></div>
+      <!-- Pet super clear cinematic FX -->
+      <div id="pet-super-fx" class="pet-super-fx" aria-hidden="true">
+        <div class="super-flash"></div>
+        <div class="super-beam"></div>
+        <div class="super-ring super-ring-1"></div>
+        <div class="super-ring super-ring-2"></div>
+        <div class="super-ring super-ring-3"></div>
+        <div class="super-scan"></div>
+        <div class="super-sparkles" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i>
+        </div>
+        <div class="super-title">SUPER CLEAR</div>
+      </div>
+      <div id="judgment-flash" class="judgment-flash" aria-hidden="true"></div>
+      <div id="beat-guide" class="beat-guide" aria-hidden="true">
+        <span class="beat-dot"></span>
+        <span class="beat-dot"></span>
+        <span class="beat-dot center"></span>
+        <span class="beat-dot"></span>
+        <span class="beat-dot"></span>
+      </div>
+      <div class="cyber-pet" id="cyber-pet" aria-live="polite" data-stage="1" style="--pet-scale: 0.42">
+        <div class="pet-bubble" id="pet-bubble">小星星报到，压力归我</div>
+        <div class="pet-stage-badge" id="pet-stage-badge" title="成长等级">Lv.1</div>
+        <button class="pet-body" id="pet-body" type="button" aria-label="赛博小星星">
+          <span class="pet-aura"></span>
+          <span class="pet-ring"></span>
+          <span class="star-rays" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="star-shape" aria-hidden="true">
+            <span class="star-facet star-facet-1"></span>
+            <span class="star-facet star-facet-2"></span>
+            <span class="star-facet star-facet-3"></span>
+          </span>
+          <span class="star-core-glow"></span>
           <span class="pet-face">
-            <span class="pet-eye pet-eye-left"></span>
-            <span class="pet-eye pet-eye-right"></span>
+            <span class="pet-eye pet-eye-left"><span class="pet-pupil"></span></span>
+            <span class="pet-eye pet-eye-right"><span class="pet-pupil"></span></span>
             <span class="pet-cheek pet-cheek-left"></span>
             <span class="pet-cheek pet-cheek-right"></span>
             <span class="pet-mouth"></span>
           </span>
           <span class="pet-core"></span>
-          <span class="pet-paw pet-paw-left"></span>
-          <span class="pet-paw pet-paw-right"></span>
-          <span class="pet-ring"></span>
+          <span class="star-spark star-spark-a"></span>
+          <span class="star-spark star-spark-b"></span>
+          <span class="star-spark star-spark-c"></span>
         </button>
         <div class="pet-energy" aria-hidden="true">
           <span id="pet-energy-fill"></span>
         </div>
+        <button type="button" id="btn-pet-super" class="pet-super-btn" hidden aria-label="释放超级清扫">
+          超级清扫
+        </button>
       </div>
       <div class="charge-indicator" id="charge-indicator" aria-hidden="true">
         <div class="charge-ring">
@@ -78,16 +129,38 @@
         </div>
         <span class="charge-label" id="charge-label">蓄力</span>
       </div>
+      <div class="level-progress" id="level-progress" aria-label="本关进度">
+        <div class="level-progress-track">
+          <span id="level-progress-fill" class="level-progress-fill"></span>
+        </div>
+        <span id="level-progress-label" class="level-progress-label">0/0</span>
+      </div>
+
       <div id="game-ui" class="game-overlay">
         <div class="start-screen" id="start-screen">
           <div class="start-content">
             <h2 class="glitch" data-text="STRESS RELEASE">STRESS RELEASE</h2>
             <p class="subtitle">把今天的烦躁清空</p>
-            <p class="howto">点击敲碎，拖拽扫过，长按蓄力后松开爆破</p>
+            <p class="howto">跟着节拍敲碎更爽 · 卡点 PERFECT 伤害/分数更高<br/>拖拽横扫 · 长按蓄力 · 能量满后点金色「超级清扫」</p>
+            <div class="best-board" aria-label="历史最佳">
+              <div class="best-item">
+                <span class="best-label">最高分</span>
+                <span id="best-score" class="best-value">0</span>
+              </div>
+              <div class="best-item">
+                <span class="best-label">最高连击</span>
+                <span id="best-combo" class="best-value">x0</span>
+              </div>
+              <div class="best-item">
+                <span class="best-label">最深波次</span>
+                <span id="best-level" class="best-value">1</span>
+              </div>
+            </div>
             <button id="btn-start" class="cyber-btn">
               <span>开始释放</span>
               <div class="btn-glow"></div>
             </button>
+            <p class="hint-keys">空格暂停 · M 静音</p>
           </div>
         </div>
 
@@ -106,6 +179,7 @@
         <div class="pause-screen" id="pause-screen" style="display: none;">
           <div class="pause-content">
             <h2>PAUSED</h2>
+            <p class="howto">喘口气，压力还在原地等你</p>
             <button id="btn-resume" class="cyber-btn"><span>继续</span></button>
             <button id="btn-restart" class="cyber-btn secondary"><span>重新开始</span></button>
           </div>
@@ -114,23 +188,35 @@
     </main>
 
     <footer class="game-footer">
-      <button id="btn-pause" class="footer-btn" title="暂停">
+      <button id="btn-pause" class="footer-btn" title="暂停 (空格)" aria-label="暂停">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <rect x="6" y="4" width="4" height="16" rx="1"/>
           <rect x="14" y="4" width="4" height="16" rx="1"/>
         </svg>
       </button>
-      <button id="btn-restart-level" class="footer-btn" title="重打本关">
+      <button id="btn-restart-level" class="footer-btn" title="重打本关" aria-label="重打本关">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
         </svg>
       </button>
+      <button id="btn-mute" class="footer-btn" title="静音" aria-label="静音" aria-pressed="false">
+        <svg class="icon-sound-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+          <path d="M15.54 8.46a5 5 0 010 7.07"/>
+          <path d="M19.07 4.93a10 10 0 010 14.14"/>
+        </svg>
+        <svg class="icon-sound-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+          <line x1="23" y1="9" x2="17" y2="15"/>
+          <line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>
+      </button>
       <div class="stat-item">
-        <span class="stat-label">pressure</span>
+        <span class="stat-label">剩余</span>
         <span id="stat-left" class="stat-value">0</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">smashed</span>
+        <span class="stat-label">击碎</span>
         <span id="stat-smashed" class="stat-value">0</span>
       </div>
     </footer>

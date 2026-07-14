@@ -1,4 +1,4 @@
-// effects.js - Particle system and visual effects
+// effects.js - Particle system (performance-tuned)
 export class ParticleSystem {
   constructor(canvas) {
     this.canvas = canvas;
@@ -6,8 +6,30 @@ export class ParticleSystem {
     this.particles = [];
     this.shockwaves = [];
     this.typeBursts = [];
-    this.maxParticles = 140;
-    this.maxTypeBursts = 3;
+    // Tight caps — shadows/text were the main FPS killers
+    this.maxParticles = 72;
+    this.maxTypeBursts = 1;
+    this.maxShockwaves = 4;
+    /** 0=low 1=medium 2=high */
+    this.quality = 2;
+  }
+
+  setQuality(q) {
+    this.quality = Math.max(0, Math.min(2, q | 0));
+    if (this.quality === 0) {
+      this.maxParticles = 36;
+      this.maxTypeBursts = 0;
+      this.maxShockwaves = 2;
+    } else if (this.quality === 1) {
+      this.maxParticles = 56;
+      this.maxTypeBursts = 1;
+      this.maxShockwaves = 3;
+    } else {
+      this.maxParticles = 72;
+      this.maxTypeBursts = 1;
+      this.maxShockwaves = 4;
+    }
+    this.trimParticles();
   }
 
   trimParticles() {
@@ -17,177 +39,178 @@ export class ParticleSystem {
     if (this.typeBursts.length > this.maxTypeBursts) {
       this.typeBursts.splice(0, this.typeBursts.length - this.maxTypeBursts);
     }
+    if (this.shockwaves.length > this.maxShockwaves) {
+      this.shockwaves.splice(0, this.shockwaves.length - this.maxShockwaves);
+    }
   }
 
   update(delta) {
-    // Update particles
-    this.particles = this.particles.filter(p => {
+    // In-place filter without allocating when mostly alive
+    let w = 0;
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
       p.x += p.vx;
       p.y += p.vy;
       p.vy += p.gravity || 0.1;
       p.life -= delta;
       p.alpha = Math.max(0, p.life / p.maxLife);
       p.size *= p.decay || 0.98;
-      return p.life > 0 && p.alpha > 0;
-    });
+      if (p.life > 0 && p.alpha > 0.02) this.particles[w++] = p;
+    }
+    this.particles.length = w;
 
-    // Update shockwaves
-    this.shockwaves = this.shockwaves.filter(sw => {
+    w = 0;
+    for (let i = 0; i < this.shockwaves.length; i++) {
+      const sw = this.shockwaves[i];
       sw.radius += sw.speed;
       sw.alpha = Math.max(0, 1 - sw.radius / sw.maxRadius);
-      return sw.alpha > 0;
-    });
+      if (sw.alpha > 0.02) this.shockwaves[w++] = sw;
+    }
+    this.shockwaves.length = w;
 
-    this.typeBursts = this.typeBursts.filter(burst => {
+    w = 0;
+    for (let i = 0; i < this.typeBursts.length; i++) {
+      const burst = this.typeBursts[i];
       burst.life -= delta;
       burst.progress = 1 - Math.max(0, burst.life / burst.maxLife);
       burst.alpha = Math.max(0, burst.life / burst.maxLife);
       burst.rotation += burst.spin;
-      return burst.life > 0;
-    });
+      if (burst.life > 0) this.typeBursts[w++] = burst;
+    }
+    this.typeBursts.length = w;
   }
 
   draw() {
-    this.drawTypeBursts();
+    const ctx = this.ctx;
+    // No shadowBlur anywhere — major GPU cost on Windows/Chrome
+    if (this.quality > 0) this.drawTypeBursts();
 
-    // Draw particles
-    this.particles.forEach(p => {
-      this.ctx.save();
-      this.ctx.globalAlpha = p.alpha;
+    const particles = this.particles;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      ctx.globalAlpha = p.alpha;
 
       if (p.type === 'spark') {
-        this.ctx.fillStyle = p.color;
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 10;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        this.ctx.fill();
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - p.size * 0.5, p.y - p.size * 0.5, p.size, p.size);
       } else if (p.type === 'shard') {
-        this.ctx.translate(p.x, p.y);
-        this.ctx.rotate(p.rotation);
-        this.ctx.fillStyle = p.color;
-        this.ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
       } else if (p.type === 'text') {
-        this.ctx.font = `bold ${p.size}px monospace`;
-        this.ctx.fillStyle = p.color;
-        this.ctx.textAlign = 'center';
-        this.ctx.shadowColor = p.color;
-        this.ctx.shadowBlur = 15;
-        this.ctx.fillText(p.text, p.x, p.y);
+        // Skip most floating text on low quality
+        if (this.quality === 0 && i % 2 === 1) continue;
+        ctx.font = `bold ${p.size}px monospace`;
+        ctx.fillStyle = p.color;
+        ctx.textAlign = 'center';
+        ctx.fillText(p.text, p.x, p.y);
       }
+    }
+    ctx.globalAlpha = 1;
 
-      this.ctx.restore();
-    });
-
-    // Draw shockwaves
-    this.shockwaves.forEach(sw => {
-      this.ctx.save();
-      this.ctx.globalAlpha = sw.alpha * 0.5;
-      this.ctx.strokeStyle = sw.color;
-      this.ctx.lineWidth = 3;
-      this.ctx.beginPath();
-      this.ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
-      this.ctx.stroke();
-      this.ctx.restore();
-    });
+    for (let i = 0; i < this.shockwaves.length; i++) {
+      const sw = this.shockwaves[i];
+      ctx.globalAlpha = sw.alpha * 0.45;
+      ctx.strokeStyle = sw.color;
+      ctx.lineWidth = this.quality === 0 ? 2 : 2.5;
+      ctx.beginPath();
+      ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   }
 
   drawTypeBursts() {
-    this.typeBursts.forEach(burst => {
+    if (!this.typeBursts.length || this.quality === 0) return;
+    const ctx = this.ctx;
+
+    for (let b = 0; b < this.typeBursts.length; b++) {
+      const burst = this.typeBursts[b];
       const ease = 1 - Math.pow(1 - burst.progress, 3);
       const radius = burst.radius + ease * burst.spread;
-      const rows = burst.rows;
-      const wobble = Math.sin(burst.progress * Math.PI) * burst.warp;
+      // Cheap: 1 row, few glyphs (was multi-row × 18 fills = disaster)
+      const rows = this.quality >= 2 ? Math.min(2, burst.rows || 1) : 1;
+      const count = this.quality >= 2 ? 8 : 6;
 
-      this.ctx.save();
-      this.ctx.translate(burst.x, burst.y);
-      this.ctx.rotate(burst.rotation);
-      this.ctx.globalAlpha = burst.alpha * 0.82;
-      this.ctx.textAlign = 'center';
-      this.ctx.textBaseline = 'middle';
-      this.ctx.font = `900 ${burst.size}px Arial, sans-serif`;
-      this.ctx.shadowColor = burst.color;
-      this.ctx.shadowBlur = 8;
+      ctx.save();
+      ctx.translate(burst.x, burst.y);
+      ctx.rotate(burst.rotation);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `800 ${burst.size}px sans-serif`;
 
       for (let row = 0; row < rows; row++) {
-        const rowRadius = radius + row * burst.rowGap;
-        const count = Math.min(18, Math.max(6, Math.floor((Math.PI * 2 * rowRadius) / (burst.size * 5.2))));
-        const rowAlpha = Math.max(0, 1 - row / rows) * burst.alpha;
-        this.ctx.globalAlpha = rowAlpha * 0.7;
-
+        const rowRadius = radius + row * (burst.rowGap || 18);
+        ctx.globalAlpha = Math.max(0, 1 - row / Math.max(rows, 1)) * burst.alpha * 0.75;
+        ctx.fillStyle = burst.color;
         for (let i = 0; i < count; i++) {
           const angle = (Math.PI * 2 * i) / count;
-          const ripple = Math.sin(angle * burst.freq + burst.progress * Math.PI * 4) * wobble;
-          const x = Math.cos(angle) * (rowRadius + ripple);
-          const y = Math.sin(angle) * (rowRadius - ripple * 0.35);
-          const scaleX = 1 + Math.sin(angle + burst.progress * 5) * 0.22;
-          const scaleY = 1 + Math.cos(angle * 2 - burst.progress * 4) * 0.18;
-
-          this.ctx.save();
-          this.ctx.translate(x, y);
-          this.ctx.rotate(angle + Math.PI / 2 + ripple * 0.01);
-          this.ctx.scale(scaleX, scaleY);
-          this.ctx.fillStyle = i % 2 ? burst.color : '#FFFFFF';
-          this.ctx.fillText(burst.words[i % burst.words.length], 0, 0);
-          this.ctx.restore();
+          const x = Math.cos(angle) * rowRadius;
+          const y = Math.sin(angle) * rowRadius;
+          ctx.fillText(burst.words[i % burst.words.length], x, y);
         }
       }
-
-      this.ctx.restore();
-    });
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
   }
 
   emitBreaking(x, y, color, count = 20) {
-    count = Math.min(count, 16);
+    const cap = this.quality === 0 ? 5 : this.quality === 1 ? 8 : 10;
+    count = Math.min(count, cap);
+    if (this.particles.length > this.maxParticles - 2) return;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-      const speed = 3 + Math.random() * 6;
-      const size = 2 + Math.random() * 4;
-
+      const speed = 3 + Math.random() * 5;
       this.particles.push({
         type: 'spark',
         x,
         y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 2,
-        size,
+        size: 2 + Math.random() * 3,
         color,
         alpha: 1,
-        life: 500 + Math.random() * 500,
-        maxLife: 1000,
+        life: 320 + Math.random() * 280,
+        maxLife: 600,
         gravity: 0.15,
-        decay: 0.96
+        decay: 0.95
       });
     }
     this.trimParticles();
   }
 
   emitShards(x, y, color, count = 15) {
-    count = Math.min(count, 8);
+    const cap = this.quality === 0 ? 2 : this.quality === 1 ? 4 : 6;
+    count = Math.min(count, cap);
+    if (this.particles.length > this.maxParticles - 2) return;
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 8;
-
+      const speed = 2 + Math.random() * 6;
       this.particles.push({
         type: 'shard',
-        x: x + (Math.random() - 0.5) * 20,
-        y: y + (Math.random() - 0.5) * 20,
+        x: x + (Math.random() - 0.5) * 16,
+        y: y + (Math.random() - 0.5) * 16,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 3,
-        size: 4 + Math.random() * 8,
+        vy: Math.sin(angle) * speed - 2.5,
+        size: 3 + Math.random() * 6,
         rotation: Math.random() * Math.PI * 2,
         color,
         alpha: 1,
-        life: 800 + Math.random() * 400,
-        maxLife: 1200,
+        life: 500 + Math.random() * 300,
+        maxLife: 800,
         gravity: 0.2,
-        decay: 0.97
+        decay: 0.96
       });
     }
     this.trimParticles();
   }
 
   emitScorePopup(x, y, score, color = '#FFD700') {
+    if (this.quality === 0 && this.particles.length > 20) return;
     this.particles.push({
       type: 'text',
       x,
@@ -195,11 +218,11 @@ export class ParticleSystem {
       vx: 0,
       vy: -2,
       text: `+${score}`,
-      size: 24,
+      size: 20,
       color,
       alpha: 1,
-      life: 1000,
-      maxLife: 1000,
+      life: 700,
+      maxLife: 700,
       gravity: 0,
       decay: 1
     });
@@ -207,31 +230,40 @@ export class ParticleSystem {
   }
 
   addShockwave(x, y, color = '#22D3EE', maxRadius = 150) {
+    if (this.quality === 0 && this.shockwaves.length >= 1) {
+      // replace oldest
+      this.shockwaves[0] = {
+        x, y, radius: 10, maxRadius, speed: Math.max(10, maxRadius / 14), color, alpha: 1
+      };
+      return;
+    }
     this.shockwaves.push({
       x,
       y,
       radius: 10,
       maxRadius,
-      speed: Math.max(8, maxRadius / 18),
+      speed: Math.max(10, maxRadius / 16),
       color,
       alpha: 1
     });
-    if (this.shockwaves.length > 8) this.shockwaves.splice(0, this.shockwaves.length - 8);
+    this.trimParticles();
   }
 
   emitPressureText(x, y, text, color = '#22D3EE', size = 18) {
+    if (this.quality === 0) return;
+    if (this.particles.length > this.maxParticles - 4) return;
     this.particles.push({
       type: 'text',
       x,
       y,
-      vx: (Math.random() - 0.5) * 1.4,
-      vy: -2.2,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: -2,
       text,
-      size,
+      size: Math.min(size, 20),
       color,
       alpha: 1,
-      life: 760,
-      maxLife: 760,
+      life: 520,
+      maxLife: 520,
       gravity: 0,
       decay: 1
     });
@@ -239,48 +271,69 @@ export class ParticleSystem {
   }
 
   emitCombo(x, y, combo) {
+    if (this.quality === 0) return;
     const colors = ['#FFD700', '#22D3EE', '#A855F7', '#FF3366'];
     const color = colors[Math.min(combo - 1, colors.length - 1)];
-
     this.particles.push({
       type: 'text',
-      x: x + (Math.random() - 0.5) * 60,
+      x: x + (Math.random() - 0.5) * 40,
       y: y - 20,
-      vx: (Math.random() - 0.5) * 2,
-      vy: -3,
+      vx: 0,
+      vy: -2.5,
       text: `x${combo} COMBO!`,
-      size: 18 + combo * 2,
+      size: 16 + Math.min(combo, 8),
       color,
       alpha: 1,
-      life: 1200,
-      maxLife: 1200,
-      gravity: 0.05,
+      life: 800,
+      maxLife: 800,
+      gravity: 0.04,
       decay: 0.99
     });
     this.trimParticles();
   }
 
   emitTypographyBurst(x, y, options = {}) {
-    if (this.particles.length > 105 || this.typeBursts.length >= this.maxTypeBursts) return;
+    if (this.quality === 0 || this.maxTypeBursts <= 0) return;
+    if (this.typeBursts.length >= this.maxTypeBursts) return;
+    if (this.particles.length > this.maxParticles * 0.85) return;
+
     this.typeBursts.push({
       x,
       y,
-      words: options.words || ['释放', 'RELAX', 'SMASH', '清空'],
+      words: options.words || ['碎', 'SMASH'],
       color: options.color || '#22D3EE',
-      radius: options.radius || 18,
-      spread: options.spread || 180,
-      rows: options.rows || 4,
-      rowGap: options.rowGap || 20,
-      size: options.size || 13,
-      warp: options.warp || 22,
-      freq: options.freq || 5,
+      radius: options.radius || 14,
+      spread: Math.min(options.spread || 100, 140),
+      rows: 1,
+      rowGap: 16,
+      size: Math.min(options.size || 12, 14),
+      warp: 0,
+      freq: 1,
       rotation: options.rotation || Math.random() * Math.PI,
-      spin: options.spin || (Math.random() - 0.5) * 0.035,
-      life: options.life || 760,
-      maxLife: options.life || 760,
+      spin: (Math.random() - 0.5) * 0.02,
+      life: Math.min(options.life || 480, 520),
+      maxLife: Math.min(options.life || 480, 520),
       alpha: 1,
       progress: 0
     });
-    this.trimParticles();
+  }
+
+  emitTrail(x, y, color = '#22D3EE') {
+    if (this.quality === 0) return;
+    if (this.particles.length > this.maxParticles - 6) return;
+    this.particles.push({
+      type: 'spark',
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: (Math.random() - 0.5) * 1.2,
+      size: 2 + Math.random(),
+      color,
+      alpha: 0.5,
+      life: 120,
+      maxLife: 120,
+      gravity: 0,
+      decay: 0.93
+    });
   }
 }
