@@ -34,6 +34,31 @@ function fileToDataUrl(file) {
   })
 }
 
+function imageToCanvas(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => {
+      const maxSide = 1280
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(image.width * scale))
+      canvas.height = Math.max(1, Math.round(image.height * scale))
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+      resolve(canvas)
+    }
+    image.onerror = reject
+    image.src = dataUrl
+  })
+}
+
+async function compressImage(file) {
+  const originalDataUrl = await fileToDataUrl(file)
+  const canvas = await imageToCanvas(originalDataUrl)
+  if (file.type === 'image/png' && file.size < 900 * 1024) return originalDataUrl
+  return canvas.toDataURL('image/jpeg', 0.82)
+}
+
 async function addFiles(fileList) {
   const files = Array.from(fileList || [])
   const remain = 3 - state.images.length
@@ -50,7 +75,7 @@ async function addFiles(fileList) {
       toast('单张图片请控制在 8MB 内', true)
       continue
     }
-    const dataUrl = await fileToDataUrl(file)
+    const dataUrl = await compressImage(file)
     state.images.push({ name: file.name, type: file.type, dataUrl })
   }
   renderThumbs()

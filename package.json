@@ -13,6 +13,7 @@
   "author": "",
   "license": "",
   "dependencies": {
+    "@netlify/blobs": "^10.7.9",
     "matter-js": "^0.20.0"
   },
   "devDependencies": {

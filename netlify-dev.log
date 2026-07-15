@@ -151,3 +151,10 @@ Response with status 200 in 156 ms.
 ⬥ Rewrote URL to /.netlify/functions/short-drama
 Request from ::ffff:127.0.0.1: POST /.netlify/functions/short-drama
 Response with status 400 in 7 ms.
+⬥ Loaded function short-drama-core
+⬥ Removed function short-drama
+⬥ Loaded function short-drama
+⬥ Loaded function short-drama-background
+⬥ Rewrote URL to /.netlify/functions/short-drama
+Request from ::ffff:127.0.0.1: POST /.netlify/functions/short-drama
+Response with status 400 in 14 ms.
