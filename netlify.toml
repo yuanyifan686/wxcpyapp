@@ -8,6 +8,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions.short-drama-background]
+  background = true
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

@@ -50,12 +50,13 @@ async function handleCreate(event, body) {
   }
 
   await saveTask(task)
+  task.status = 'uploading'
+  task.progress = 12
+  task.message = '后台任务已启动，正在上传图片'
+  await saveTask(task)
+
   try {
     await invokeBackground(event, task.id)
-    task.status = 'uploading'
-    task.progress = 12
-    task.message = '后台任务已启动，正在上传图片'
-    await saveTask(task)
   } catch (err) {
     task.status = 'failed'
     task.progress = 100
