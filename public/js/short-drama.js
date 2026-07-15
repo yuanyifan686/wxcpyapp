@@ -146,6 +146,11 @@ async function submitTask(event) {
   button.disabled = true
   button.textContent = '提交中...'
   stopPolling()
+  setProgress({
+    status: 'uploading',
+    progress: 12,
+    message: '正在提交图片和商品介绍',
+  })
 
   try {
     const task = await api('/api/short-drama', {
@@ -164,6 +169,12 @@ async function submitTask(event) {
     state.pollTimer = setInterval(pollTask, 4500)
     pollTask()
   } catch (err) {
+    setProgress({
+      status: 'failed',
+      progress: 100,
+      message: '提交失败',
+      error_message: err.message,
+    })
     toast(err.message, true)
   } finally {
     button.disabled = false

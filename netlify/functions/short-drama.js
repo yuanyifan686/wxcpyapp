@@ -4,6 +4,7 @@ const tasks = new Map()
 
 const COZE_FILE_UPLOAD_URL = 'https://api.coze.cn/v1/files/upload'
 const COZE_WORKFLOW_RUN_URL = 'https://api.coze.cn/v1/workflow/run'
+const COZE_WORKFLOW_QUERY_PATH = '/workflows/{workflow_id}/run_histories/{execute_id}'
 const ARK_TASKS_PATH = '/contents/generations/tasks'
 
 function getShortDramaConfig() {
@@ -62,7 +63,7 @@ async function runCozePromptWorkflow(cfg, body, fileIds) {
       api_key: cfg.arkApiKey,
       product_images: fileIds.map((id) => JSON.stringify({ file_id: id })),
     },
-    is_async: false,
+    is_async: true,
   }
   const res = await fetch(COZE_WORKFLOW_RUN_URL, {
     method: 'POST',
@@ -76,9 +77,49 @@ async function runCozePromptWorkflow(cfg, body, fileIds) {
   if (!res.ok || json.code !== 0) {
     throw new Error((json && json.msg) || 'Coze 提示词工作流失败')
   }
-  const prompt = parsePrompt(json.data || json.output || json)
-  if (!prompt) throw new Error('Coze 未返回视频提示词')
-  return prompt
+  const executeId = extractCozeExecuteId(json)
+  if (!executeId) throw new Error('Coze 未返回 execute_id')
+  return executeId
+}
+
+async function queryCozePromptWorkflow(cfg, executeId) {
+  const path = COZE_WORKFLOW_QUERY_PATH
+    .replace('{workflow_id}', encodeURIComponent(cfg.cozeWorkflowId))
+    .replace('{execute_id}', encodeURIComponent(executeId))
+  const res = await fetch(cfg.cozeBaseUrl.replace(/\/$/, '') + path, {
+    headers: { Authorization: 'Bearer ' + cfg.cozeToken },
+  })
+  const json = await res.json()
+  if (!res.ok || json.code !== 0) {
+    throw new Error((json && json.msg) || 'Coze 提示词工作流查询失败')
+  }
+  const data = ((json.data || [])[0]) || {}
+  const status = data.execute_status
+  if (status === 'Running') return { completed: false }
+  if (status === 'Fail') {
+    throw new Error(data.error_message || 'Coze 提示词工作流执行失败')
+  }
+  if (status === 'Success') {
+    const prompt = parsePrompt(data.output)
+    if (!prompt) throw new Error('Coze 未返回视频提示词')
+    return { completed: true, prompt }
+  }
+  return { completed: false }
+}
+
+function extractCozeExecuteId(json) {
+  if (json && json.execute_id) return String(json.execute_id)
+  const data = json && json.data
+  if (data && typeof data === 'object' && data.execute_id) return String(data.execute_id)
+  if (typeof data === 'string' && data) {
+    try {
+      const parsed = JSON.parse(data)
+      if (parsed && parsed.execute_id) return String(parsed.execute_id)
+    } catch (err) {
+      return ''
+    }
+  }
+  return ''
 }
 
 function parsePrompt(output) {
@@ -213,8 +254,10 @@ async function handleCreate(body) {
     progress: 8,
     message: '任务已创建',
     product_name: body.product_name || '',
+    duration: body.duration,
     prompt: '',
     video_url: '',
+    coze_execute_id: '',
     provider_task_id: '',
     error_message: '',
     created_at: now,
@@ -222,41 +265,35 @@ async function handleCreate(body) {
   }
   tasks.set(id, task)
 
-  Promise.resolve()
-    .then(async () => {
-      task.status = 'uploading'
-      task.progress = 18
-      task.message = '正在上传图片到 Coze'
-      task.updated_at = new Date().toISOString()
+  try {
+    task.status = 'uploading'
+    task.progress = 18
+    task.message = '正在上传图片到 Coze'
+    task.updated_at = new Date().toISOString()
 
-      const images = rawImages.map(decodeImage)
-      const fileIds = []
-      for (const image of images) {
-        fileIds.push(await uploadToCoze(cfg, image))
-      }
+    const images = rawImages.map(decodeImage)
+    task.images = images.map((image) => ({
+      dataUrl: image.dataUrl,
+      mimeType: image.mimeType,
+      name: image.name,
+    }))
+    const fileIds = []
+    for (const image of images) {
+      fileIds.push(await uploadToCoze(cfg, image))
+    }
 
-      task.status = 'prompting'
-      task.progress = 38
-      task.message = '正在生成视频提示词'
-      task.updated_at = new Date().toISOString()
-
-      const cozePrompt = await runCozePromptWorkflow(cfg, body, fileIds)
-      const finalPrompt = cleanPrompt(cozePrompt, body.duration)
-      task.prompt = finalPrompt
-
-      task.status = 'running'
-      task.progress = 68
-      task.message = '正在生成视频'
-      task.updated_at = new Date().toISOString()
-      task.provider_task_id = await createSeedanceTask(cfg, finalPrompt, images)
-    })
-    .catch((err) => {
-      task.status = 'failed'
-      task.progress = 100
-      task.message = '生成失败'
-      task.error_message = err.message || '生成失败'
-      task.updated_at = new Date().toISOString()
-    })
+    task.status = 'prompting'
+    task.progress = 38
+    task.message = '正在生成视频提示词'
+    task.coze_execute_id = await runCozePromptWorkflow(cfg, body, fileIds)
+    task.updated_at = new Date().toISOString()
+  } catch (err) {
+    task.status = 'failed'
+    task.progress = 100
+    task.message = '生成失败'
+    task.error_message = err.message || '生成失败'
+    task.updated_at = new Date().toISOString()
+  }
 
   return jsonResponse(200, { code: 0, data: publicTask(task) })
 }
@@ -272,6 +309,33 @@ async function handleStatus(taskId) {
   const cfg = getShortDramaConfig()
   const task = tasks.get(taskId)
   if (!task) return jsonResponse(404, { code: 1, msg: '任务不存在或已过期' })
+
+  if (task.status === 'prompting' && task.coze_execute_id) {
+    try {
+      const result = await queryCozePromptWorkflow(cfg, task.coze_execute_id)
+      if (!result.completed) {
+        task.progress = Math.min(58, task.progress + 4)
+        task.message = '正在生成视频提示词'
+        task.updated_at = new Date().toISOString()
+        return jsonResponse(200, { code: 0, data: publicTask(task) })
+      }
+
+      const finalPrompt = cleanPrompt(result.prompt, task.duration)
+      task.prompt = finalPrompt
+      task.status = 'running'
+      task.progress = 68
+      task.message = '正在生成视频'
+      task.provider_task_id = await createSeedanceTask(cfg, finalPrompt, task.images || [])
+      task.updated_at = new Date().toISOString()
+    } catch (err) {
+      task.status = 'failed'
+      task.progress = 100
+      task.message = '生成失败'
+      task.error_message = err.message || '生成失败'
+      task.updated_at = new Date().toISOString()
+      return jsonResponse(200, { code: 0, data: publicTask(task) })
+    }
+  }
 
   if (task.status === 'running' && task.provider_task_id) {
     try {

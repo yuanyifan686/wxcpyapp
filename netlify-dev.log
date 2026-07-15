@@ -144,3 +144,10 @@ Response with status 200 in 55 ms.
 ⬥ Rewrote URL to /.netlify/functions/short-drama?task_id=sd_mrlp8v5t_ywl52p
 Request from ::1: GET /.netlify/functions/short-drama?task_id=sd_mrlp8v5t_ywl52p
 Response with status 200 in 156 ms.
+⬥ Reloading function short-drama...
+⬥ Reloaded function short-drama
+⬥ Reloading function short-drama...
+⬥ Reloaded function short-drama
+⬥ Rewrote URL to /.netlify/functions/short-drama
+Request from ::ffff:127.0.0.1: POST /.netlify/functions/short-drama
+Response with status 400 in 7 ms.
