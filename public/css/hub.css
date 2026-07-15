@@ -117,7 +117,7 @@ html, body {
 
 @media (min-width: 700px) {
   .hub-cards {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
 }
@@ -156,6 +156,12 @@ html, body {
   box-shadow: 0 16px 48px rgba(34, 211, 238, 0.16);
 }
 
+.drama-card:hover,
+.drama-card:focus-visible {
+  border-color: rgba(255, 215, 0, 0.58);
+  box-shadow: 0 16px 48px rgba(255, 215, 0, 0.14);
+}
+
 .card-glow {
   position: absolute;
   width: 180px;
@@ -174,6 +180,10 @@ html, body {
 
 .game-card .card-glow {
   background: rgba(34, 211, 238, 0.45);
+}
+
+.drama-card .card-glow {
+  background: rgba(255, 215, 0, 0.38);
 }
 
 .card-icon {
@@ -197,6 +207,11 @@ html, body {
 .game-card .card-icon {
   color: var(--accent);
   box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
+}
+
+.drama-card .card-icon {
+  color: var(--gold);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.22);
 }
 
 .card-body {
@@ -237,6 +252,7 @@ html, body {
 
 .fortune-card .card-cta { color: #c4b5fd; }
 .game-card .card-cta { color: var(--accent); }
+.drama-card .card-cta { color: var(--gold); }
 
 .card-cta .arrow {
   transition: transform 0.2s ease;

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="AI 带货短剧 - 上传商品图生成竖屏短剧视频" />
+  <meta name="theme-color" content="#06060f" />
+  <title>AI 带货短剧 | 赛博工坊</title>
+  <link rel="stylesheet" href="/css/short-drama.css" />
+</head>
+<body>
+  <div class="viewport-bg" aria-hidden="true">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <main class="app">
+    <header class="hero">
+      <a class="back-link" href="/">← 返回赛博工坊</a>
+      <p class="chip">AI SHORT DRAMA</p>
+      <h1>AI 带货短剧</h1>
+      <p class="subtitle">上传商品图和介绍，自动生成视频提示词，再用 Seedance 生成竖屏带货短剧。</p>
+    </header>
+
+    <section class="workspace">
+      <form class="panel form-panel" id="drama-form">
+        <div class="field">
+          <label for="image-input">商品图片</label>
+          <div class="upload-zone" id="upload-zone">
+            <input id="image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple />
+            <strong>点击或拖拽上传</strong>
+            <span>支持 jpg / png / webp，建议 1-3 张</span>
+          </div>
+          <div class="thumb-grid" id="thumb-grid"></div>
+        </div>
+
+        <div class="field">
+          <label for="product-name">商品名称</label>
+          <input id="product-name" type="text" placeholder="例如：茅台酒 / 便携榨汁杯" maxlength="80" />
+        </div>
+
+        <div class="field">
+          <label for="product-desc">商品介绍</label>
+          <textarea id="product-desc" required minlength="10" placeholder="写清楚产品卖点、使用场景、目标人群，不少于 10 个字"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="duration">视频时长</label>
+          <select id="duration">
+            <option value="5">5 秒</option>
+            <option value="8">8 秒</option>
+            <option value="10" selected>10 秒</option>
+          </select>
+        </div>
+
+        <button class="primary-btn" id="submit-btn" type="submit">生成短剧视频</button>
+      </form>
+
+      <section class="panel result-panel">
+        <div class="status-head">
+          <div>
+            <span class="eyebrow">STATUS</span>
+            <h2 id="status-title">等待提交</h2>
+          </div>
+          <span class="badge" id="status-badge">READY</span>
+        </div>
+
+        <div class="progress-card">
+          <div class="progress-meta">
+            <span id="progress-message">上传商品图片并提交后开始生成</span>
+            <strong id="progress-percent">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-steps">
+            <span>上传</span>
+            <span>提示词</span>
+            <span>视频生成</span>
+            <span>完成</span>
+          </div>
+        </div>
+
+        <div class="video-card" id="video-card">
+          <div class="empty">生成完成后，视频会显示在这里。</div>
+        </div>
+
+        <div class="prompt-card">
+          <div class="prompt-head">
+            <h3>视频提示词</h3>
+            <button class="ghost-btn" id="copy-prompt" type="button" disabled>复制</button>
+          </div>
+          <pre id="prompt-output">等待 Coze 工作流返回提示词...</pre>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="/js/short-drama.js"></script>
+</body>
+</html>
